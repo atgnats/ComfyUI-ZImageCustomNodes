@@ -74,7 +74,7 @@ function init(self_, node) {
                 self.eventEnabled = true;
             }
             if( typeof oldCallback === 'function' ) { oldCallback.apply(this, arguments); }
-        }
+        };
     }
 
     if( controlWidget ) {
@@ -82,7 +82,7 @@ function init(self_, node) {
         controlWidget.afterQueued = function() {
             onControlWidget(self, controlWidget, controlWidget.value);
             if( typeof oldAfterQueued === 'function' ) { oldAfterQueued.apply(this, arguments); }
-        }
+        };
     }
 
     // set controller properties and public methods
@@ -94,7 +94,7 @@ function init(self_, node) {
     self.topStylesOriginID   = null;
     self.inputOriginID       = null;
     self.updateTopStyles     = function(topStyles) { updateTopStyles(self, topStyles); };
-    self.processChainMessage = function(message) { processChainMessage(self, message); }
+    self.processChainMessage = function(message) { processChainMessage(self, message); };
     self.onInterval          = function() { onInterval(self); };
     scheduleIntervalCalls(self);
 }
@@ -152,18 +152,18 @@ function processChainMessage(self, message) {
  */
 function updateTopStyles(self, topStyles) {
 
-    const node            = self.node
+    const node            = self.node;
     const allStyleWidgets = self.allStyleWidgets;
-    if( !topStyles ) { topStyles = [] }
+    if( !topStyles ) { topStyles = []; }
 
     for( let i=0 ; i<allStyleWidgets.length ; i++ ) {
         const widget    = allStyleWidgets[i];
         const styleName = i<topStyles.length ? topStyles[i] : "";
         if( isValidStyleName(styleName) ) {
             const text = (i+1) + " - " + styleName;
-            forceRenameWidget(widget, node, text)
+            forceRenameWidget(widget, node, text);
         } else {
-            forceRenameWidget(widget, node, "-")
+            forceRenameWidget(widget, node, "-");
         }
     }
 }
@@ -380,7 +380,7 @@ app.registerExtension({
      */
     init() {
         if (!ENABLED) return;
-        console.log("##>> My Top Styles: extension loaded.")
+        console.log("##>> My Top Styles: extension loaded.");
     },
 
     /**
@@ -394,8 +394,8 @@ app.registerExtension({
         // inject controller only to nodes of type "My Top-X Styles Selector"
         if( comfyClass.startsWith("MyTop10Styles //ZImage" ) ) {
             node.zzController = {};
-            init(node.zzController, node)
+            init(node.zzController, node);
         }
     },
 
-})
+});

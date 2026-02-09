@@ -35,6 +35,7 @@ app.registerExtension({
     async setup() {
         const restartTimer = () => {
             setTimeout(() => {
+                // eslint-disable-next-line
                 (window.requestIdleCallback || window.setTimeout)(() => {
 
                     // execute the low priority tasks and restart the timer
@@ -49,4 +50,4 @@ app.registerExtension({
         restartTimer();
     },
 
-})
+});
