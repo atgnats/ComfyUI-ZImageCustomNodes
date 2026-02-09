@@ -198,7 +198,8 @@ def get_project_version():
     try:
         import tomllib
         with open(pyproject_path, "rb") as f:
-            return tomllib.load(f).get("project", {}).get("version", "0.0.1")
+            data = tomllib.load(f)
+            return data.get("project", {}).get("version", DEFAULT_ERROR_VERSION)
     except (ImportError, Exception):
         pass
 
@@ -206,8 +207,9 @@ def get_project_version():
     try:
         with open(pyproject_path, "r", encoding="utf-8") as f:
             for line in f:
-                if line.startswith("version"):
-                    return line.split("=")[1].strip().strip('"').strip("'")
+                if line.strip().startswith("version"):
+                    _, _, value = line.partition('=')
+                    return value.split("#")[0].strip().strip('"').strip("'")
     except:
         pass
 
