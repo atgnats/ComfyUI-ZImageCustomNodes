@@ -54,7 +54,7 @@ class MyTop10Styles(io.ComfyNode):
                 io.Boolean.Input( "style_8" , display_name="-", default=False, ),
                 io.Boolean.Input( "style_9" , display_name="-", default=False, ),
                 io.Boolean.Input( "style_10", display_name="-", default=False, ),
-                io.Custom("ZIPOWER_DIVIDER").Input("divider"),
+                io.Custom("ZIPN_DIVIDER").Input("divider"),
                 io.Combo.Input( "control_after_generate", options=["fixed", "next"], default="fixed", ),
                 io.Combo.Input( "output_to", options=cls.channels(), ),
             ],
