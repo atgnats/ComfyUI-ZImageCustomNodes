@@ -35,15 +35,16 @@ def _get_last_version_styles() -> list[list[str]]:
                          [5] thumbnail   (str): URL for the style's thumbnail (currently empty).
     """
     LAST_VERSION_STYLE_GROUPS = PREDEFINED_STYLE_GROUPS
-    last_version_styles = []
+    styles = []
     for style_group in LAST_VERSION_STYLE_GROUPS:
         category = style_group.category
-        names    = style_group.get_names()
-        for name in names:
-            thumbnail   = ""
-            description = ""
-            tags        = ""
-            template    = style_group.get_style_template(name)
+        for name in style_group.get_names():
+            style = style_group.get_style(name)
+            if not style: continue
+            thumbnail   = f"{style.slug}.jpg"
+            description = style.description
+            tags        = style.comma_separated_tags
+            template    = style.template
             style_data : list[str] = [
                 name,         # 0: name
                 category,     # 1: category
@@ -52,8 +53,8 @@ def _get_last_version_styles() -> list[list[str]]:
                 template,     # 4: template
                 thumbnail,    # 5: thumbnail url (front-end generated)
             ]
-            last_version_styles.append(style_data)
-    return last_version_styles
+            styles.append(style_data)
+    return styles
 
 
 #============================== SERVER ROUTES ==============================#
