@@ -64,11 +64,13 @@ class ZSamplerTurboAdvanced2(io.ComfyNode):
                 io.Float.Input       ("denoise", default=1.0, min=0.00, max=1.00, step=0.01,
                                       tooltip="The amount of denoising applied, lower values will maintain the structure of the initial image allowing for image to image sampling.",
                                      ),
-                io.Combo.Input       ("noise_offset_method", default="accurate", options=["accurate", "experimental"],
-                                      tooltip="Method used to calculate the offset of the initial noise. `exact`: Calculates values based on strict theoretical formulas."
+                io.Combo.Input       ("noise_bias_method", default="experimental", options=["experimental", "accurate"],
+                                      tooltip="Method used to calculate the bias in each channel of the initial noise. "
+                                      "`experimental`: Denoises a blank latent image to calculate the bias. "
+                                      "`accurate`: Denoises a random latent image to calculate the bias. "
                                      ),
-                io.Float.Input       ("noise_offset_scale", default=0.12, min=0.00, max=1.00, step=0.01,
-                                      tooltip="The automatic adjustament range of the noise offset before the first denoising step. (0 means no automatic adjustment).",
+                io.Float.Input       ("noise_bias_scale", default=0.12, min=0.00, max=1.00, step=0.01,
+                                      tooltip="The level of automatic adjustament from the calculated noise bias to apply before the first denoising step. (0 means no automatic adjustment).",
                                      ),
                 io.Float.Input       ("noise_overdose", default=0.30, min=-1.00, max=1.00, step=0.01,
                                       tooltip="The amount of overamplitude in the initial noise generation. (negative values will reduce the amplitude)."
@@ -83,14 +85,14 @@ class ZSamplerTurboAdvanced2(io.ComfyNode):
     @classmethod
     def execute(cls,
                 model,
-                positive           : list,
-                latent_input       : dict[str, Any],
-                seed               : int,
-                steps              : int,
-                denoise            : float,
-                noise_offset_method: str,
-                noise_offset_scale : float,
-                noise_overdose     : float,
+                positive         : list,
+                latent_input     : dict[str, Any],
+                seed             : int,
+                steps            : int,
+                denoise          : float,
+                noise_bias_method: str,
+                noise_bias_scale : float,
+                noise_overdose   : float,
                 ) -> io.NodeOutput:
 
         # create a progress bar from 0 to 100
@@ -147,19 +149,19 @@ class ZSamplerTurboAdvanced2(io.ComfyNode):
         # given that the first sigma value is always set to 0.991, these values
         # play a role in supplementing low-frequency components that might be
         # lacking in the early stages of image generation.
-        initial_noise_offset    = 0
+        initial_noise_bias      = 0
         initial_noise_amplitude = 1+noise_overdose if noise_overdose>=0 else 1/(1-noise_overdose)
 
-        # `initial_noise_offset` is calculated ONLY if the user set a non-zero scale
+        # `initial_noise_bias` is calculated ONLY if the user set a non-zero scale
         # (this calculation adds an extra step to the diffusion process)
-        if noise_offset_scale != 0:
-            offset = cls.calculate_noise_offset(latent_input, model, seed, positive, positive,
-                                                sampler = sampler,
-                                                sigmas  = [1.000, 0.991],
-                                                method  = noise_offset_method,
-                                                progress_preview = ProgressPreview( 100, parent=(progress,0,100//steps) ),
-                                                )
-            initial_noise_offset = (offset / 10.0) * noise_offset_scale
+        if noise_bias_scale != 0 and noise_bias_method != "none":
+            bias = cls.calculate_denoise_bias(latent_input, model, seed, positive, positive,
+                                              sampler = sampler,
+                                              sigmas  = [1.000, 0.991],
+                                              method  = noise_bias_method,
+                                              progress_preview = ProgressPreview( 100, parent=(progress,0,100//steps) ),
+                                              )
+            initial_noise_bias = (bias / 10.0) * noise_bias_scale
 
         # execute the 3-stage denoising process
         latent_output = cls.execute_3_stage_denoising(latent_input,
@@ -168,7 +170,7 @@ class ZSamplerTurboAdvanced2(io.ComfyNode):
                                                       sigmas1                 = sigmas1,
                                                       sigmas2                 = sigmas2,
                                                       sigmas3                 = sigmas3,
-                                                      initial_noise_offset    = initial_noise_offset,
+                                                      initial_noise_bias    = initial_noise_bias,
                                                       initial_noise_amplitude = initial_noise_amplitude,
                                                       progress_preview = ProgressPreview( 100, parent=(progress,100//steps,100) ),
                                                       )
@@ -179,7 +181,7 @@ class ZSamplerTurboAdvanced2(io.ComfyNode):
     #__ internal functions ________________________________
 
     @classmethod
-    def calculate_noise_offset(cls,
+    def calculate_denoise_bias(cls,
                                latent_image,
                                model    : Any,
                                seed     : int,
@@ -192,9 +194,9 @@ class ZSamplerTurboAdvanced2(io.ComfyNode):
                                progress_preview : ProgressPreview
                                ) -> torch.Tensor:
         """
-        Calculates the noise offset for a given latent image.
+        Calculates the denoised bias for a given sigma value.
 
-        The offset is determined by generating a denoised sample from pure noise
+        The bias is determined by generating a denoised sample from pure noise
         using specified sigma values, then calculating the mean across each
         channel of this resulting sample.
 
@@ -211,13 +213,13 @@ class ZSamplerTurboAdvanced2(io.ComfyNode):
             progress_preview: An object for reporting progress.
 
         Returns:
-            A tensor containing the calculated noise offset values. The shape of
+            A tensor containing the calculated noise bias. The shape of
             this tensor is [batch_size, channels, 1, 1], corresponding to each
             channel's average value in the latent space.
         """
 
         if method not in ['accurate', 'experimental']:
-            raise ValueError(f'invalid diffusion offset calculation method: {method}')
+            raise ValueError(f'invalid bias calculation method: {method}')
         if isinstance(sigmas, list):
             sigmas = torch.tensor(sigmas, device='cpu')
 
@@ -229,7 +231,7 @@ class ZSamplerTurboAdvanced2(io.ComfyNode):
                                            model, seed, 1.0, positive, negative,
                                            sampler          = sampler,
                                            sigmas           = sigmas,
-                                           noise_offset     = 0,
+                                           noise_bias       = 0,
                                            noise_amplitude  = 1.0 if method=="accurate" else 0.0,
                                            progress_preview = ProgressPreview( steps,
                                                     parent=(progress_preview, 0, 100)),
@@ -252,7 +254,7 @@ class ZSamplerTurboAdvanced2(io.ComfyNode):
                                   sigmas1  : torch.Tensor | list | None,
                                   sigmas2  : torch.Tensor | list | None,
                                   sigmas3  : torch.Tensor | list | None,
-                                  initial_noise_offset   : torch.Tensor | float | int | None = None,
+                                  initial_noise_bias     : torch.Tensor | float | int | None = None,
                                   initial_noise_amplitude: torch.Tensor | float | int | None = 1.0,
                                   progress_preview       : ProgressPreview,
                                   ):
@@ -272,10 +274,10 @@ class ZSamplerTurboAdvanced2(io.ComfyNode):
             sigmas1     : Sigma values for the first stage of denoising. Can be a tensor, list, or None.
             sigmas2     : Sigma values for the second stage of denoising. Can be a tensor, list, or None.
             sigmas3     : Sigma values for the third stage of denoising. Can be a tensor, list, or None.
-            initial_noise_offset: An optional constant bias applied to the initial noise.
-                                  Can be a tensor, scalar, or None.
-                                  If tensor, it must have shape [batch_size, channels, 1, 1].
-                                  (0.0 or None = no bias)
+            initial_noise_bias: An optional constant bias applied to the initial noise.
+                                Can be a tensor, scalar, or None.
+                                If tensor, it must have shape [batch_size, channels, 1, 1].
+                                (0.0 or None = no bias)
             initial_noise_amplitude: An optional amplitude factor applied to the initial noise.
                                      Can be a tensor, scalar, or None.
                                      If tensor, it must have shape [batch_size, channels, 1, 1].
@@ -305,7 +307,7 @@ class ZSamplerTurboAdvanced2(io.ComfyNode):
                                 model, seed, cfg, positive, negative,
                                 sampler          = sampler,
                                 sigmas           = sigmas1,
-                                noise_offset     = initial_noise_offset,
+                                noise_bias     = initial_noise_bias,
                                 noise_amplitude  = initial_noise_amplitude,
                                 progress_preview = ProgressPreview( prog1-prog0,
                                         parent=(progress_preview, 100*prog0//total, 100*prog1//total)),
@@ -316,7 +318,7 @@ class ZSamplerTurboAdvanced2(io.ComfyNode):
                                 model, seed, cfg, positive, negative,
                                 sampler          = sampler,
                                 sigmas           = sigmas2,
-                                noise_offset     = 0,
+                                noise_bias     = 0,
                                 noise_amplitude  = 0,
                                 progress_preview = ProgressPreview( prog2-prog1,
                                         parent=(progress_preview, 100*prog1//total, 100*prog2//total)),
@@ -326,7 +328,7 @@ class ZSamplerTurboAdvanced2(io.ComfyNode):
                                 model, 696969, cfg, positive, negative,
                                 sampler          = sampler,
                                 sigmas           = sigmas3,
-                                noise_offset     = 0,
+                                noise_bias     = 0,
                                 noise_amplitude  = 1.0,
                                 progress_preview = ProgressPreview( total-prog2,
                                         parent=(progress_preview, 100*prog2//total, 100*total//total)),
@@ -346,7 +348,7 @@ class ZSamplerTurboAdvanced2(io.ComfyNode):
                         *,
                         sampler         : comfy.samplers.KSAMPLER,
                         sigmas          : list | torch.Tensor,
-                        noise_offset    : torch.Tensor | float | int | None,
+                        noise_bias      : torch.Tensor | float | int | None,
                         noise_amplitude : torch.Tensor | float | int | None,
                         progress_preview: ProgressPreview | None = None,
                         ) -> dict[str, Any]:
@@ -363,7 +365,7 @@ class ZSamplerTurboAdvanced2(io.ComfyNode):
             negative    : Negative prompts or conditioning applied to the model during denoising.
             sampler     : ComfyUI object representing the sampler used for each denoising step.
             sigmas      : Sigma values for each diffusion process step (can be list or torch.Tensor).
-            noise_offset: A constant bias applied to the initial noise.
+            noise_bias  : A constant bias applied to the initial noise.
                           If it is a tensor, it must have shape [batch_size, channels, 1, 1].
                           Can also be a scalar value or None.
             noise_amplitude: The amplitude of noise added to the latent image before denoising.
@@ -376,31 +378,31 @@ class ZSamplerTurboAdvanced2(io.ComfyNode):
 
         Notes:
             - If `sigmas` is provided as a list, it will be converted to a torch.Tensor.
-            - The function automatically handles cases where `noise_offset` or `noise_amplitude` are zero scalars.
-            - The initial noise is scaled using `noise_amplitude`, and then the bias from `noise_offset` is applied.
+            - The function automatically handles cases where `noise_bias` or `noise_amplitude` are zero scalars.
+            - The initial noise is scaled using `noise_amplitude`, and then the bias from `noise_bias` is applied.
         """
 
         # if sigmas is a list then convert it to tensor
         if isinstance(sigmas, list):
             sigmas = torch.tensor(sigmas, device='cpu')
 
-        # if `noise_offset` is a torch.Tensor
+        # if `noise_bias` is a torch.Tensor
         # then it should have shape [batch_size, channels, 1, 1]
-        if isinstance(noise_offset, torch.Tensor):
-            if noise_offset.ndim != 4 or noise_offset.shape[2:] != (1, 1):
-                raise ValueError(f"Invalid `noise_offset` shape: expected [batch_size, channels, 1, 1], "
-                                 f"but got {list(noise_offset.shape)}")
+        if isinstance(noise_bias, torch.Tensor):
+            if noise_bias.ndim != 4 or noise_bias.shape[2:] != (1, 1):
+                raise ValueError(f"Invalid `noise_bias` shape: expected [batch_size, channels, 1, 1], "
+                                 f"but got {list(noise_bias.shape)}")
 
         # if `noise_amplitude` is a torch.Tensor
         # then it should have shape [batch_size, channels, 1, 1]
         if isinstance(noise_amplitude, torch.Tensor):
             if noise_amplitude.ndim != 4 or noise_amplitude.shape[2:] != (1, 1):
-                raise ValueError(f"Invalid `noise_offset` shape: expected [batch_size, channels, 1, 1], "
+                raise ValueError(f"Invalid `noise_amplitude` shape: expected [batch_size, channels, 1, 1], "
                                  f"but got {list(noise_amplitude.shape)}")
 
-        # if `noise_offset` or `noise_amplitude` is zero scalar then ignore it
-        if isinstance(noise_offset, (float,int)) and noise_offset == 0:
-            noise_offset = None
+        # if `noise_bias` or `noise_amplitude` is zero scalar then ignore it
+        if isinstance(noise_bias, (float,int)) and noise_bias == 0:
+            noise_bias = None
         if isinstance(noise_amplitude, (float,int)) and noise_amplitude == 0:
             noise_amplitude = None
 
@@ -419,9 +421,9 @@ class ZSamplerTurboAdvanced2(io.ComfyNode):
         else:
             noise = comfy.sample.prepare_noise(samples, noise_seed, batch_index) * noise_amplitude
 
-        # apply a constant bias to the noise from `noise_offset`
-        if noise_offset is not None:
-            noise = noise + noise_offset
+        # apply a constant bias using `noise_bias`
+        if noise_bias is not None:
+            noise = noise + noise_bias
 
         # this wrapper increments by 1 the steps count reported by comfyui.
         # comfyui reports the end of the first denoising step as 0 (0% completion)

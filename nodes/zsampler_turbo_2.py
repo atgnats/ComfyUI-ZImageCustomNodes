@@ -55,14 +55,14 @@ class ZSamplerTurbo2(io.ComfyNode):
                 io.Int.Input         ("steps", default=9, min=4, max=9, step=1,
                                       tooltip="The number of iterations to be performed during the sampling process.",
                                      ),
-                io.Float.Input       ("denoise", default=1.0, min=0.98, max=1.00, step=0.01,
+                io.Float.Input       ("denoise", default=1.0, min=0.00, max=1.00, step=0.01,
                                       tooltip="The amount of denoising applied, lower values will maintain the structure of the initial image allowing for image to image sampling.",
                                      ),
-                io.Combo.Input       ("noise_bias_method", default="experimental", options=["experimental", "accurate", "ignore"],
+                io.Combo.Input       ("noise_bias_method", default="experimental", options=["experimental", "accurate", "none"],
                                       tooltip="Method used to calculate the bias in each channel of the initial noise. "
                                       "`experimental`: Denoises a blank latent image to calculate the bias. "
                                       "`accurate`: Denoises a random latent image to calculate the bias. "
-                                      "`ignore`: Use a zero-biased initial noise. (old method)",
+                                      "`none`: Uses a non-biased initial noise. (old method)",
                                      ),
             ],
             outputs=[
@@ -84,40 +84,40 @@ class ZSamplerTurbo2(io.ComfyNode):
 
         if noise_bias_method == "experimental":
             return ZSamplerTurboAdvanced2.execute(
-                model               = model,
-                positive            = positive,
-                latent_input        = latent_input,
-                seed                = seed,
-                steps               = steps,
-                denoise             = denoise,
-                noise_offset_method = "experimental",
-                noise_offset_scale  = 0.11,
-                noise_overdose      = 0.34)
+                model             = model,
+                positive          = positive,
+                latent_input      = latent_input,
+                seed              = seed,
+                steps             = steps,
+                denoise           = denoise,
+                noise_bias_method = "experimental",
+                noise_bias_scale  = 0.11,
+                noise_overdose    = 0.34)
 
 
         elif noise_bias_method == "accurate":
             return ZSamplerTurboAdvanced2.execute(
-                model               = model,
-                positive            = positive,
-                latent_input        = latent_input,
-                seed                = seed,
-                steps               = steps,
-                denoise             = denoise,
-                noise_offset_method = "accurate",
-                noise_offset_scale  = 0.06,
-                noise_overdose      = 0.34)
+                model             = model,
+                positive          = positive,
+                latent_input      = latent_input,
+                seed              = seed,
+                steps             = steps,
+                denoise           = denoise,
+                noise_bias_method = "accurate",
+                noise_bias_scale  = 0.06,
+                noise_overdose    = 0.34)
 
-        elif noise_bias_method == "ignore":
+        elif noise_bias_method == "none":
             return ZSamplerTurboAdvanced2.execute(
-                model               = model,
-                positive            = positive,
-                latent_input        = latent_input,
-                seed                = seed,
-                steps               = steps,
-                denoise             = denoise,
-                noise_offset_method = "accurate",
-                noise_offset_scale  = 0.00,
-                noise_overdose      = 0.00)
+                model             = model,
+                positive          = positive,
+                latent_input      = latent_input,
+                seed              = seed,
+                steps             = steps,
+                denoise           = denoise,
+                noise_bias_method = "none",
+                noise_bias_scale  = 0.00,
+                noise_overdose    = 0.00)
 
         else:
             raise Exception(f"Unknown noise bias method: {noise_bias_method}")

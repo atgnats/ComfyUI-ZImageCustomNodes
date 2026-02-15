@@ -1,104 +1,9 @@
 {
   "id": "f14c6566-993e-4413-bd11-9c7f2ca07fd1",
   "revision": 0,
-  "last_node_id": 43,
-  "last_link_id": 63,
+  "last_node_id": 53,
+  "last_link_id": 71,
   "nodes": [
-    {
-      "id": 8,
-      "type": "VAEDecode",
-      "pos": [
-        1160,
-        150
-      ],
-      "size": [
-        160,
-        50
-      ],
-      "flags": {},
-      "order": 12,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "samples",
-          "type": "LATENT",
-          "link": 22
-        },
-        {
-          "name": "vae",
-          "type": "VAE",
-          "link": 25
-        }
-      ],
-      "outputs": [
-        {
-          "name": "IMAGE",
-          "type": "IMAGE",
-          "slot_index": 0,
-          "links": [
-            47
-          ]
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "VAEDecode",
-        "cnr_id": "comfy-core",
-        "ver": "0.7.0"
-      },
-      "widgets_values": []
-    },
-    {
-      "id": 18,
-      "type": "ZSamplerTurbo //ZImagePowerNodes",
-      "pos": [
-        870,
-        150
-      ],
-      "size": [
-        250,
-        480
-      ],
-      "flags": {},
-      "order": 10,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "model",
-          "type": "MODEL",
-          "link": 57
-        },
-        {
-          "name": "positive",
-          "type": "CONDITIONING",
-          "link": 63
-        },
-        {
-          "name": "latent_input",
-          "type": "LATENT",
-          "link": 48
-        }
-      ],
-      "outputs": [
-        {
-          "name": "latent_output",
-          "type": "LATENT",
-          "links": [
-            22
-          ]
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "ZSamplerTurbo //ZImagePowerNodes",
-        "aux_id": "martin-rizzo/ComfyUI-ZImagePowerNodes",
-        "ver": "7cb3b03f95eeae260ebbc2facdf6ba6c1e16e639"
-      },
-      "widgets_values": [
-        1,
-        "fixed",
-        9,
-        1
-      ]
-    },
     {
       "id": 20,
       "type": "Reroute",
@@ -154,7 +59,7 @@
           "name": "LATENT",
           "type": "LATENT",
           "links": [
-            48
+            70
           ]
         }
       ],
@@ -166,36 +71,6 @@
         "3:2  (photo)",
         "medium (recommended)",
         1
-      ]
-    },
-    {
-      "id": 31,
-      "type": "SaveImage //ZImagePowerNodes",
-      "pos": [
-        1360,
-        150
-      ],
-      "size": [
-        540,
-        760
-      ],
-      "flags": {},
-      "order": 13,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "images",
-          "type": "IMAGE",
-          "link": 47
-        }
-      ],
-      "outputs": [],
-      "properties": {
-        "Node name for S&R": "SaveImage //ZImagePowerNodes"
-      },
-      "widgets_values": [
-        "ZImage/%date:yyyy_MM_dd%/ZI",
-        true
       ]
     },
     {
@@ -360,7 +235,7 @@
           "name": "",
           "type": "MODEL",
           "links": [
-            57
+            68
           ]
         }
       ],
@@ -475,6 +350,130 @@
       }
     },
     {
+      "id": 8,
+      "type": "VAEDecode",
+      "pos": [
+        1220,
+        150
+      ],
+      "size": [
+        160,
+        50
+      ],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "samples",
+          "type": "LATENT",
+          "link": 71
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 25
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "slot_index": 0,
+          "links": [
+            47
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VAEDecode",
+        "cnr_id": "comfy-core",
+        "ver": "0.7.0"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 31,
+      "type": "SaveImage //ZImagePowerNodes",
+      "pos": [
+        1400,
+        150
+      ],
+      "size": [
+        540,
+        760
+      ],
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 47
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "SaveImage //ZImagePowerNodes"
+      },
+      "widgets_values": [
+        "ZImage/%date:yyyy_MM_dd%/ZI",
+        true
+      ]
+    },
+    {
+      "id": 47,
+      "type": "ZSamplerTurbo2 //ZImagePowerNodes",
+      "pos": [
+        880,
+        150
+      ],
+      "size": [
+        320,
+        630
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 68
+        },
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "link": 69
+        },
+        {
+          "name": "latent_input",
+          "type": "LATENT",
+          "link": 70
+        }
+      ],
+      "outputs": [
+        {
+          "name": "latent_output",
+          "type": "LATENT",
+          "links": [
+            71
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ZSamplerTurbo2 //ZImagePowerNodes"
+      },
+      "widgets_values": [
+        1,
+        "fixed",
+        9,
+        1,
+        "experimental"
+      ]
+    },
+    {
       "id": 43,
       "type": "StylePromptEncoder2 //ZImagePowerNodes",
       "pos": [
@@ -506,7 +505,7 @@
           "name": "CONDITIONING",
           "type": "CONDITIONING",
           "links": [
-            63
+            69
           ]
         },
         {
@@ -519,10 +518,10 @@
         "Node name for S&R": "StylePromptEncoder2 //ZImagePowerNodes"
       },
       "widgets_values": [
-        "\"Vintage Photo\"",
+        "\"Flash 90s Photo\"",
         null,
         null,
-        "The interior of a bar features architecture with rounded, modular forms. A bar counter extends horizontally along the frame, showcasing a strip of acrylic. In the center-right, a man in his mid-thirties stands at the bar, resting one hand on the surface while holding a tall glass in the other. He turns his head to look directly at the camera, a playful, knowing smile spreading across his face. The glass contains a drink with small floating spheres that reflect the light. He wears a form-fitting uniform with a short, high collar and a single vertical stripe on the jacket. His brown hair is neatly styled with a clean, mid-century part. In the center, tending the bar, is a rather peculiar alien bartender, a colossal and terrifying humanoid figure resembling an octopus. He is a mass of tissue from whose torso emerges a network of thick tentacles. He is wearing black dress pants. And on its head, a set of multifaceted insectoid eyes constantly moves, scanning the room. The tentacles, with delicate pads at their tips, manipulate the glassware with unsettling grace. Behind the bartender, a mirrored wall reflects rows of liquor bottles with geometric labels. Above the bar floats a neon sign made of curved glass tubes that reads 'COSMIC LOUNGE' in tall, rounded letters, emitting light with a soft, glowing halo. An illuminated menu board reads 'SIGNATURE DRINKS' with three items: 'ORBITAL HIGHBALL,' 'NEBULA SOUR,' and 'ROCKET MARTINI,' each displayed on glowing horizontal bars. To the right, a cylindrical column features a vertical neon panel that reads 'OPEN 24 HOURS' in condensed letters within a translucent strip. To the left, a curved booth sits beneath a domed ceiling light. An illuminated sign reading 'GALAXY BAR SERVICE' encircles the inner rim of the dome in capitals and dominates the left side of the frame. Soft lighting reflects off the glass and acrylic surfaces, highlighting the structural design."
+        "A woman stands on the right side of the image, on a path leading through the woods. Her back is to the viewer, and she is in a fighting stance. Yellow balls are lined up along the dirt path. In the distance, through the mist, a yellow monster, resembling Pac-Man, is visible. The monster is spherical, with large black eyes and sharp, metallic teeth. The woman has short, wavy, light brown hair and fair skin. She is barefoot and wears a tight-fitting red hooded robe and a miniskirt. The path is dirt and lined with small plants."
       ],
       "color": "#232",
       "bgcolor": "#353",
@@ -530,14 +529,6 @@
     }
   ],
   "links": [
-    [
-      22,
-      18,
-      0,
-      8,
-      0,
-      "LATENT"
-    ],
     [
       24,
       19,
@@ -561,14 +552,6 @@
       31,
       0,
       "IMAGE"
-    ],
-    [
-      48,
-      32,
-      0,
-      18,
-      2,
-      "LATENT"
     ],
     [
       54,
@@ -595,14 +578,6 @@
       "VAE"
     ],
     [
-      57,
-      39,
-      0,
-      18,
-      0,
-      "MODEL"
-    ],
-    [
       59,
       40,
       0,
@@ -619,12 +594,36 @@
       "CLIP"
     ],
     [
-      63,
+      68,
+      39,
+      0,
+      47,
+      0,
+      "MODEL"
+    ],
+    [
+      69,
       43,
       0,
-      18,
+      47,
       1,
       "CONDITIONING"
+    ],
+    [
+      70,
+      32,
+      0,
+      47,
+      2,
+      "LATENT"
+    ],
+    [
+      71,
+      47,
+      0,
+      8,
+      0,
+      "LATENT"
     ]
   ],
   "groups": [
@@ -645,10 +644,10 @@
   "config": {},
   "extra": {
     "ds": {
-      "scale": 0.7513148009015778,
+      "scale": 0.8264462809917356,
       "offset": [
-        450.51456962972054,
-        216.92787486986646
+        167.94175712972017,
+        107.01213658861657
       ]
     },
     "frontendVersion": "1.37.11",
