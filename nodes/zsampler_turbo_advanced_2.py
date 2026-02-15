@@ -154,7 +154,7 @@ class ZSamplerTurboAdvanced2(io.ComfyNode):
 
         # `initial_noise_bias` is calculated ONLY if the user set a non-zero scale
         # (this calculation adds an extra step to the diffusion process)
-        if noise_bias_scale != 0 and noise_bias_method != "none":
+        if noise_bias_scale != 0 and noise_bias_method != "none" and denoise >= 0.99:
             bias = cls.calculate_denoise_bias(latent_input, model, seed, positive, positive,
                                               sampler = sampler,
                                               sigmas  = [1.000, 0.991],
@@ -170,7 +170,8 @@ class ZSamplerTurboAdvanced2(io.ComfyNode):
                                                       sigmas1                 = sigmas1,
                                                       sigmas2                 = sigmas2,
                                                       sigmas3                 = sigmas3,
-                                                      initial_noise_bias    = initial_noise_bias,
+                                                      sigma_limit             = denoise,
+                                                      initial_noise_bias      = initial_noise_bias,
                                                       initial_noise_amplitude = initial_noise_amplitude,
                                                       progress_preview = ProgressPreview( 100, parent=(progress,100//steps,100) ),
                                                       )
@@ -181,67 +182,6 @@ class ZSamplerTurboAdvanced2(io.ComfyNode):
     #__ internal functions ________________________________
 
     @classmethod
-    def calculate_denoise_bias(cls,
-                               latent_image,
-                               model    : Any,
-                               seed     : int,
-                               positive : list,
-                               negative : list,
-                               *,
-                               sampler  : comfy.samplers.KSAMPLER,
-                               sigmas   : list | torch.Tensor,
-                               method   : str = 'accurate',  #< "accurate" or "experimental",
-                               progress_preview : ProgressPreview
-                               ) -> torch.Tensor:
-        """
-        Calculates the denoised bias for a given sigma value.
-
-        The bias is determined by generating a denoised sample from pure noise
-        using specified sigma values, then calculating the mean across each
-        channel of this resulting sample.
-
-        Args:
-            latent_image: Dictionary containing information about the initial latent image,
-                          only its width and height are used.
-            model       : ComfyUI object representing the model to use for denoising.
-            seed        : The seed used to generate random noise.
-            positive    : Positive prompts or conditioning applied to the model during denoising.
-            negative    : Negative prompts or conditioning applied to the model during denoising.
-            sampler     : ComfyUI object representing the sampler used for each denoising step.
-            sigmas      : Sigma values for each diffusion process step (can be list or torch.Tensor).
-            method      : Calculation method, can be 'accurate' or 'experimental'.
-            progress_preview: An object for reporting progress.
-
-        Returns:
-            A tensor containing the calculated noise bias. The shape of
-            this tensor is [batch_size, channels, 1, 1], corresponding to each
-            channel's average value in the latent space.
-        """
-
-        if method not in ['accurate', 'experimental']:
-            raise ValueError(f'invalid bias calculation method: {method}')
-        if isinstance(sigmas, list):
-            sigmas = torch.tensor(sigmas, device='cpu')
-
-        # calculate the number of diffusion steps (for the progress bar)
-        steps = sigmas.shape[-1] - 1
-
-        # run the sampler on pure noise and calculate the mean of the result
-        latent_image = cls.execute_sampler(latent_image,
-                                           model, seed, 1.0, positive, negative,
-                                           sampler          = sampler,
-                                           sigmas           = sigmas,
-                                           noise_bias       = 0,
-                                           noise_amplitude  = 1.0 if method=="accurate" else 0.0,
-                                           progress_preview = ProgressPreview( steps,
-                                                    parent=(progress_preview, 0, 100)),
-                                           )
-
-        return torch.mean(latent_image["samples"], dim=[2, 3], keepdim=True)
-
-
-
-    @classmethod
     def execute_3_stage_denoising(cls,
                                   latent_image,
                                   model    : Any,
@@ -250,10 +190,11 @@ class ZSamplerTurboAdvanced2(io.ComfyNode):
                                   positive : list,
                                   negative : list,
                                   *,
-                                  sampler  : comfy.samplers.KSAMPLER,
-                                  sigmas1  : torch.Tensor | list | None,
-                                  sigmas2  : torch.Tensor | list | None,
-                                  sigmas3  : torch.Tensor | list | None,
+                                  sampler     : comfy.samplers.KSAMPLER,
+                                  sigmas1     : torch.Tensor | list | None,
+                                  sigmas2     : torch.Tensor | list | None,
+                                  sigmas3     : torch.Tensor | list | None,
+                                  sigma_limit : float | None = None,
                                   initial_noise_bias     : torch.Tensor | float | int | None = None,
                                   initial_noise_amplitude: torch.Tensor | float | int | None = 1.0,
                                   progress_preview       : ProgressPreview,
@@ -295,6 +236,11 @@ class ZSamplerTurboAdvanced2(io.ComfyNode):
         if isinstance(sigmas3, list):
             sigmas3 = torch.tensor(sigmas3, device='cpu')
 
+        if isinstance(sigma_limit, (float,int)):
+            sigmas1 = cls.truncate_sigmas(sigmas1, sigma_limit)
+            sigmas2 = cls.truncate_sigmas(sigmas2, sigma_limit)
+            sigmas3 = cls.truncate_sigmas(sigmas3, sigma_limit)
+
         # calculate the progress level for each step
         prog0 = 0
         prog1 = prog0 + (sigmas1.shape[-1] - 1 if sigmas1 is not None else 0)
@@ -303,33 +249,40 @@ class ZSamplerTurboAdvanced2(io.ComfyNode):
 
         # the three stages of denoising
         if sigmas1 is not None:
+            add_noise = True
             latent_image = cls.execute_sampler(latent_image,
                                 model, seed, cfg, positive, negative,
                                 sampler          = sampler,
                                 sigmas           = sigmas1,
-                                noise_bias     = initial_noise_bias,
-                                noise_amplitude  = initial_noise_amplitude,
+                                noise_bias       = initial_noise_bias,
+                                noise_amplitude  = initial_noise_amplitude if add_noise else 0.0,
                                 progress_preview = ProgressPreview( prog1-prog0,
                                         parent=(progress_preview, 100*prog0//total, 100*prog1//total)),
                                 )
 
         if sigmas2 is not None:
+            add_noise = False
+            # normally this stage should NOT add noise (stage1 and stage2 must
+            # behave as a single donoise process) but if no first stage was
+            # executed then this stage is the first and it should add noise
+            if sigmas1 is None: add_noise = True
             latent_image = cls.execute_sampler(latent_image,
                                 model, seed, cfg, positive, negative,
                                 sampler          = sampler,
                                 sigmas           = sigmas2,
-                                noise_bias     = 0,
-                                noise_amplitude  = 0,
+                                noise_bias       = 0,
+                                noise_amplitude  = 1.0 if add_noise else 0.0,
                                 progress_preview = ProgressPreview( prog2-prog1,
                                         parent=(progress_preview, 100*prog1//total, 100*prog2//total)),
                                 )
         if sigmas3 is not None:
+            add_noise = True
             latent_image = cls.execute_sampler(latent_image,
                                 model, 696969, cfg, positive, negative,
                                 sampler          = sampler,
                                 sigmas           = sigmas3,
-                                noise_bias     = 0,
-                                noise_amplitude  = 1.0,
+                                noise_bias       = 0,
+                                noise_amplitude  = 1.0 if add_noise else 0.0,
                                 progress_preview = ProgressPreview( total-prog2,
                                         parent=(progress_preview, 100*prog2//total, 100*total//total)),
                                 )
@@ -438,3 +391,91 @@ class ZSamplerTurboAdvanced2(io.ComfyNode):
         out = latent_image.copy()
         out["samples"] = samples
         return out
+
+
+
+    @classmethod
+    def calculate_denoise_bias(cls,
+                               latent_image,
+                               model    : Any,
+                               seed     : int,
+                               positive : list,
+                               negative : list,
+                               *,
+                               sampler  : comfy.samplers.KSAMPLER,
+                               sigmas   : list | torch.Tensor,
+                               method   : str = 'accurate',  #< "accurate" or "experimental",
+                               progress_preview : ProgressPreview
+                               ) -> torch.Tensor:
+        """
+        Calculates the denoised bias for a given sigma value.
+
+        The bias is determined by generating a denoised sample from pure noise
+        using specified sigma values, then calculating the mean across each
+        channel of this resulting sample.
+
+        Args:
+            latent_image: Dictionary containing information about the initial latent image,
+                          only its width and height are used.
+            model       : ComfyUI object representing the model to use for denoising.
+            seed        : The seed used to generate random noise.
+            positive    : Positive prompts or conditioning applied to the model during denoising.
+            negative    : Negative prompts or conditioning applied to the model during denoising.
+            sampler     : ComfyUI object representing the sampler used for each denoising step.
+            sigmas      : Sigma values for each diffusion process step (can be list or torch.Tensor).
+            method      : Calculation method, can be 'accurate' or 'experimental'.
+            progress_preview: An object for reporting progress.
+
+        Returns:
+            A tensor containing the calculated noise bias. The shape of
+            this tensor is [batch_size, channels, 1, 1], corresponding to each
+            channel's average value in the latent space.
+        """
+
+        if method not in ['accurate', 'experimental']:
+            raise ValueError(f'invalid bias calculation method: {method}')
+        if isinstance(sigmas, list):
+            sigmas = torch.tensor(sigmas, device='cpu')
+
+        # calculate the number of diffusion steps (for the progress bar)
+        steps = sigmas.shape[-1] - 1
+
+        # run the sampler on pure noise and calculate the mean of the result
+        latent_image = cls.execute_sampler(latent_image,
+                                           model, seed, 1.0, positive, negative,
+                                           sampler          = sampler,
+                                           sigmas           = sigmas,
+                                           noise_bias       = 0,
+                                           noise_amplitude  = 1.0 if method=="accurate" else 0.0,
+                                           progress_preview = ProgressPreview( steps,
+                                                    parent=(progress_preview, 0, 100)),
+                                           )
+
+        return torch.mean(latent_image["samples"], dim=[2, 3], keepdim=True)
+
+
+    @classmethod
+    def truncate_sigmas(cls, sigmas: torch.Tensor | None, limit: float) -> torch.Tensor | None:
+        """
+        Truncates a descending tensor of sigmas at a specific limit.
+
+        Args:
+            sigmas: A tensor containing descending sigma values to be truncated.
+            limit : The threshold value to cap the tensor.
+        Returns:
+            A new tensor with values > limit followed by the limit itself.
+        """
+        if sigmas is None:
+            return None
+
+        # create the mask to filter out values > limit
+        mask = sigmas < limit
+        if not mask.any():
+            return None
+        if mask.all():
+            return sigmas
+
+        # filter the tensor using the mask and add the limit
+        truncated_sigmas = sigmas[mask]
+        limit_sigma = torch.tensor([limit], dtype=sigmas.dtype, device=sigmas.device)
+        return torch.cat((limit_sigma, truncated_sigmas))
