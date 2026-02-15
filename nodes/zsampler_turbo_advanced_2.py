@@ -65,15 +65,20 @@ class ZSamplerTurboAdvanced2(io.ComfyNode):
                 io.Float.Input       ("denoise", default=1.0, min=0.00, max=1.00, step=0.01,
                                       tooltip="The amount of denoising applied, lower values will maintain the structure of the initial image allowing for image to image sampling.",
                                      ),
+                io.Custom("ZIPN_DIVIDER").Input("divider"),
                 io.Combo.Input       ("noise_bias_method", default="experimental", options=["experimental", "accurate"],
                                       tooltip="Method used to calculate the bias in each channel of the initial noise. "
-                                      "`experimental`: Denoises a blank latent image to calculate the bias. "
-                                      "`accurate`: Denoises a random latent image to calculate the bias. "
+                                              "`experimental`: Denoises a blank latent image to calculate the bias. "
+                                              "`accurate`: Denoises a random latent image to calculate the bias. "
                                      ),
-                io.Float.Input       ("noise_bias_scale", default=0.12, min=0.00, max=1.00, step=0.01,
+                io.Combo.Input       ("noise_bias_size", default="source", options=["source", "1024px", "512px", "256px"],
+                                      tooltip="The size of the latent image used to calculate the bias. "
+                                              "The smaller the image size, the faster the calculation."
+                                     ),
+                io.Float.Input       ("noise_bias_scale", default=0.11, min=0.00, max=1.00, step=0.01,
                                       tooltip="The level of automatic adjustament from the calculated noise bias to apply before the first denoising step. (0 means no automatic adjustment).",
                                      ),
-                io.Float.Input       ("noise_overdose", default=0.30, min=-1.00, max=1.00, step=0.01,
+                io.Float.Input       ("noise_overdose", default=0.34, min=-1.00, max=1.00, step=0.01,
                                       tooltip="The amount of overamplitude in the initial noise generation. (negative values will reduce the amplitude)."
                                      ),
             ],
@@ -92,8 +97,10 @@ class ZSamplerTurboAdvanced2(io.ComfyNode):
                 steps            : int,
                 denoise          : float,
                 noise_bias_method: str,
+                noise_bias_size  : str | int | None,
                 noise_bias_scale : float,
                 noise_overdose   : float,
+                **kwargs
                 ) -> io.NodeOutput:
 
         # create a progress bar from 0 to 100
@@ -101,6 +108,14 @@ class ZSamplerTurboAdvanced2(io.ComfyNode):
 
         # only "euler" sampler has been tested with this technique
         sampler  = comfy.samplers.sampler_object("euler")
+
+        # `forced_size` is noise_bias_size converted to integer (pixels)
+        # or None if "source" option was selected
+        forced_size = None
+        if isinstance(noise_bias_size, str) and noise_bias_size.endswith("px"):
+            forced_size = int(noise_bias_size[:-2])
+        elif isinstance(noise_bias_size, (int,float)):
+            forced_size = int(noise_bias_size)
 
         # Sigmas are divided into 3 stages:
         #   Stages 1 and 2 combined function similarly to a standard denoising process,
@@ -157,9 +172,10 @@ class ZSamplerTurboAdvanced2(io.ComfyNode):
         # (this calculation adds an extra step to the diffusion process)
         if noise_bias_scale != 0 and noise_bias_method != "none" and denoise >= 0.99:
             bias = cls.calculate_denoise_bias(latent_input, model, seed, positive, positive,
-                                              sampler = sampler,
-                                              sigmas  = [1.000, 0.991],
-                                              method  = noise_bias_method,
+                                              sampler     = sampler,
+                                              sigmas      = [1.000, 0.991],
+                                              method      = noise_bias_method,
+                                              forced_size = forced_size,
                                               progress_preview = ProgressPreview( 100, parent=(progress,0,100//steps) ),
                                               )
             initial_noise_bias = (bias / 10.0) * noise_bias_scale
@@ -320,6 +336,7 @@ class ZSamplerTurboAdvanced2(io.ComfyNode):
                         sigmas          : list | torch.Tensor,
                         noise_bias      : torch.Tensor | float | int | None,
                         noise_amplitude : torch.Tensor | float | int | None,
+                        fix_empty_latent: bool = True,
                         progress_preview: ProgressPreview | None = None,
                         ) -> dict[str, Any]:
         """
@@ -379,7 +396,7 @@ class ZSamplerTurboAdvanced2(io.ComfyNode):
 
         # extract all info that comes packaged in the `latent_image` dictionary
         latent      = latent_image.copy()
-        samples     = comfy.sample.fix_empty_latent_channels(model, latent["samples"])
+        samples     = comfy.sample.fix_empty_latent_channels(model, latent["samples"]) if fix_empty_latent else latent["samples"]
         noise_mask  = latent.get("noise_mask")
         batch_index = latent.get("batch_index")
         steps       = int( sigmas.shape[-1] )
@@ -421,8 +438,9 @@ class ZSamplerTurboAdvanced2(io.ComfyNode):
                                *,
                                sampler  : comfy.samplers.KSAMPLER,
                                sigmas   : list | torch.Tensor,
-                               method   : str = 'accurate',  #< "accurate" or "experimental",
-                               progress_preview : ProgressPreview
+                               method   : str = 'accurate',  #< "accurate" or "experimental"
+                               forced_size     : int | None = None,  #< optional, forced size of the sample
+                               progress_preview: ProgressPreview
                                ) -> torch.Tensor:
         """
         Calculates the denoised bias for a given sigma value.
@@ -456,6 +474,13 @@ class ZSamplerTurboAdvanced2(io.ComfyNode):
 
         # calculate the number of diffusion steps (for the progress bar)
         steps = sigmas.shape[-1] - 1
+
+        if isinstance(forced_size, (int, float)) and forced_size >= 8:
+            samples : torch.Tensor = latent_image["samples"]
+            samples_shape = samples.shape[:-2] + ( int(forced_size//8), int(forced_size//8) )
+            latent_image  = latent_image.copy()
+            latent_image["samples"] =  torch.zeros(samples_shape, dtype=samples.dtype, layout=samples.layout, device="cpu")
+
 
         # run the sampler on pure noise and calculate the mean of the result
         latent_image = cls.execute_sampler(latent_image,

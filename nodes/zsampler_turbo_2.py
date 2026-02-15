@@ -52,17 +52,22 @@ class ZSamplerTurbo2(io.ComfyNode):
                 io.Int.Input         ("seed", default=1, min=1, max=0xffffffffffffffff, control_after_generate=True,
                                       tooltip="The seed used for the random noise generator, ensuring the same result is produced with the same value.",
                                      ),
-                io.Int.Input         ("steps", default=9, min=4, max=9, step=1,
+                io.Int.Input         ("steps", default=9, min=5, max=10, step=1,
                                       tooltip="The number of iterations to be performed during the sampling process.",
                                      ),
                 io.Float.Input       ("denoise", default=1.0, min=0.00, max=1.00, step=0.01,
                                       tooltip="The amount of denoising applied, lower values will maintain the structure of the initial image allowing for image to image sampling.",
                                      ),
+                io.Custom            ("ZIPN_DIVIDER").Input("divider"),
                 io.Combo.Input       ("noise_bias_method", default="experimental", options=["experimental", "accurate", "none"],
                                       tooltip="Method used to calculate the bias in each channel of the initial noise. "
                                       "`experimental`: Denoises a blank latent image to calculate the bias. "
                                       "`accurate`: Denoises a random latent image to calculate the bias. "
                                       "`none`: Uses a non-biased initial noise. (old method)",
+                                     ),
+                io.Boolean.Input     ("noise_bias_boost", default=False, label_on="fast", label_off="off",
+                                      tooltip="When enabled, it use a smaller latent image to calculate the bias, "
+                                              "otherwise the full size of the input image is used. "
                                      ),
             ],
             outputs=[
@@ -80,6 +85,8 @@ class ZSamplerTurbo2(io.ComfyNode):
                 steps            : int,
                 denoise          : float,
                 noise_bias_method: str,
+                noise_bias_boost : bool,
+                **kwargs
                 ) -> io.NodeOutput:
 
         if noise_bias_method == "experimental":
@@ -91,6 +98,7 @@ class ZSamplerTurbo2(io.ComfyNode):
                 steps             = steps,
                 denoise           = denoise,
                 noise_bias_method = "experimental",
+                noise_bias_size   = 256 if noise_bias_boost else None,
                 noise_bias_scale  = 0.11,
                 noise_overdose    = 0.34)
 
@@ -104,6 +112,7 @@ class ZSamplerTurbo2(io.ComfyNode):
                 steps             = steps,
                 denoise           = denoise,
                 noise_bias_method = "accurate",
+                noise_bias_size   = 256 if noise_bias_boost else None,
                 noise_bias_scale  = 0.06,
                 noise_overdose    = 0.34)
 
@@ -116,6 +125,7 @@ class ZSamplerTurbo2(io.ComfyNode):
                 steps             = steps,
                 denoise           = denoise,
                 noise_bias_method = "none",
+                noise_bias_size   = 256 if noise_bias_boost else None,
                 noise_bias_scale  = 0.00,
                 noise_overdose    = 0.00)
 
