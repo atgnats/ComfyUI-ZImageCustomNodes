@@ -17,7 +17,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 """
 from typing             import Any
 from comfy_api.latest   import io
-from .zsampler_turbo_advanced_2 import ZSamplerTurboAdvanced2
+from ..zsampler_turbo_advanced_2 import ZSamplerTurboAdvanced2
 
 
 class ZSamplerTurbo(io.ComfyNode):
@@ -83,6 +83,7 @@ class ZSamplerTurbo(io.ComfyNode):
             steps             = steps + 1,
             denoise           = denoise,
             noise_bias_method = "none",
+            noise_bias_size   = None,
             noise_bias_scale  = 0.00,
             noise_overdose    = 0.00)
 
