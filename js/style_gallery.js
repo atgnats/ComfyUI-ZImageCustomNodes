@@ -31,38 +31,48 @@ class StyleGalleryDialog extends ComfyDialog {
     constructor() {
         super();
 
-        // icons can be taken from PrimeIcons or Pictogrammers MDT
-        // PrimeIcons       : e.g. "i.pi.pi-image"   (https://primevue.org/icons)
-        // Pictogrammers MDI: e.g. "i.mdi.mdi-image" (https://pictogrammers.com/library/mdi)
+        // create the custom dialog.
+        //   icons can be taken from PrimeIcons or Pictogrammers MDT
+        //   PrimeIcons       : e.g. "i.pi.pi-image"   (https://primevue.org/icons)
+        //   Pictogrammers MDI: e.g. "i.mdi.mdi-image" (https://pictogrammers.com/library/mdi)
         this.element = makeCustomDialog(
             DIALOG_ID                 , //< ID of the DOM element where the dialog is located
             TITLE_ID                  , //< ID of the DOM element where the title is located
             'Select Style'            , //< title
             'i.mdi.mdi-image-multiple', //< icon
-            this.createDialogContent(), //< dialog content
+
+            // DIALOG CONTENT
+            html("div.zipn-dialog", {}, [
+                this.createSearchBar(),
+                html("div.zipn-two-columns", {}, [
+                    StyleGalleryDialog.DETAILS_PANE,
+                    StyleGalleryDialog.SEARCH_RESULTS_PANE,
+                ]),
+            ]),
+
             () => this.close() //< close callback
         );
 
-        // Variables used to store dialog states,
+        // variables used to store dialog states,
         // which should be re-initialized every time the dialog is launched
         this.isOpen            = false;
-        this.isPointerLocked   = false;
-        this.initialStyleName  = ""; //< the initial style name (before applying the selected one)
-        this.initialStyleID    = null; //< the initial style ID (before applying the selected one)
-        this.searchStyleID     = null;
-        this.activeStyleID     = null; //< the style name that is currently selected (if any)
-        this.oldSelectionID    = null;
+        this.initialStyleName  = "";     //< the initial style name (before applying the selected one)
+        this.initialStyleID    = null;   //< the initial style ID (before applying the selected one)
+        this.searchStyleID     = null;   //< ID of the style that matches the search text (null = not matching anything)
+        this.pointedStyleID    = null;   //< ID of the style being pointed by the mouse (null = not pointing to anything)
+        this.oldSelectionID    = null;   //< ID of the previously selected style (null = no previous selection)
         this.textFilter        = "";     //< text entered by the user to filter styles (case-insensitive)
         this.categoryFilter    = "";     //< "photo", "illustration", "wild", "custom" (empty means all categories)
         this.viewMode          = "grid"; //< "grid" or "list"
 
-        // Internal variables:
-        this.stylesByID          = [];   //< an array to store styles in ID order (for fast access)
-        this.styleIDsByLowerName = {};   //< map lowercase style names to their IDs.
-        this.inputChangeTimer1   = null; //< timer used by the 'onInputChange' event
-        this.inputChangeTimer2   = null; //< timer used by the 'onInputChange' event
+        // internal variables:
+        this.stylesByID          = [];    //< an array to store styles in ID order (for fast access)
+        this.styleIDsByLowerName = {};    //< map lowercase style names to their IDs.
+        this.inputChangeTimer1   = null;  //< timer used by the 'onInputChange' event
+        this.inputChangeTimer2   = null;  //< timer used by the 'onInputChange' event
+        this.isPointerLocked     = false; //< flag used by 'onInputChange' to block mouse events
 
-        // Dialog elements:
+        // dialog elements:
         this.searchInputEl     = this.element.querySelector('#zipn-search-input');
         this.searchResultsEl   = this.element.querySelector('#zipn-search-results');
         this.detailsHeaderEl   = this.element.querySelector('.zipn-details-pane h1');
@@ -120,20 +130,21 @@ class StyleGalleryDialog extends ComfyDialog {
     /**
      * Closes the dialog.
      */
-    close() {
-        this.onClose();
-        super.close();
-    }
+    close()
+    { this.onClose(); super.close();  }
 
+
+   /**
+    * Handles the user's choice of a style and closes the dialog.
+    */
     userHasChosen() {
-        const selectionID = this.activeStyleID ? this.activeStyleID : this.searchStyleID;
+        const selectionID = this.pointedStyleID ? this.pointedStyleID : this.searchStyleID;
         const style       = selectionID != null ? this.stylesByID[selectionID] : null;
         if( style ) {
             this.onSelectStyle?.(style.name);
             this.close();
         }
     }
-
 
 
     /**
@@ -151,8 +162,14 @@ class StyleGalleryDialog extends ComfyDialog {
         this.tb_customButtonEl.classList.toggle('p-highlight', this.categoryFilter == "custom" );
     }
 
+
+    /**
+     * Updates the selected style and displays its details in the dialog.
+     * @param {boolean} force - If true, updates the selection even if
+     *                          no change occurred. Defaults to false.
+     */
     updateSelection(force=false) {
-        const newSelectionID = this.activeStyleID ? this.activeStyleID : this.searchStyleID;
+        const newSelectionID = this.pointedStyleID ? this.pointedStyleID : this.searchStyleID;
         const detailsID      = newSelectionID     ? newSelectionID     : this.initialStyleID;
         if( !force && newSelectionID === this.oldSelectionID ) { return; }
 
@@ -167,11 +184,12 @@ class StyleGalleryDialog extends ComfyDialog {
         if( newCardEl ) { newCardEl.classList.add('active'); }
 
         // update details pane
-        const style = detailsID != null ? this.stylesByID[ detailsID ] : null;
+        const style       = detailsID != null ? this.stylesByID[ detailsID ] : null;
+        const cacheBuster = this.cacheBuster;
         this.detailsHeaderEl.textContent = style?.name        || "";
         this.detailsTextEl.textContent   = style?.description || "";
         if( style?.thumbnail ) {
-            this.detailsImageEl.src              = style.thumbnail;
+            this.detailsImageEl.src              = style.thumbnail + '&cache=' + cacheBuster;
             this.detailsImageEl.style.visibility = 'visible';
         } else {
             this.detailsImageEl.style.visibility = 'hidden';
@@ -240,8 +258,9 @@ class StyleGalleryDialog extends ComfyDialog {
      *                                    to display.
      */
     static renderResults(containerEl, viewMode, styles, initialStyleID = null) {
+        this.cacheBuster = Math.floor(Date.now() / 3600000);
         const baseClass   = `zipn-style-${viewMode}`;
-        const cacheBuster = Math.floor(Date.now() / 3600000);
+        const cacheBuster = this.cacheBuster;
 
         containerEl.className = baseClass;
         containerEl.innerHTML = styles.map( style => {
@@ -283,18 +302,26 @@ class StyleGalleryDialog extends ComfyDialog {
 
     //-- EVENTS -----------------------------------------------------------
 
+    /**
+     * Called when the dialog is launched or re-opened.
+     *
+     * Initializes variables and loads style data from the server.
+     * @param {string} styleName - The name of the initial style to be selected.
+     */
     onOpen(styleName) {
 
         // initialize variables as if the dialog had just been created
         this.isOpen              = true;
-        this.isPointerLocked     = false;
         this.initialStyleName    = styleName;
+        this.initialStyleID      = null;
         this.searchStyleID       = null;
-        this.activeStyleID       = null;
+        this.pointedStyleID      = null;
         this.oldSelectionID      = null;
         this.textFilter          = '';
-        this.searchInputEl.value = '';
         this.categoryFilter      = "";
+        this.isPointerLocked     = false;
+        this.searchInputEl.value = '';
+        // `this.viewMode` isn't set here becouse is kept between dialog reopens
 
         // load style data from server
         fetchLastVersionStyles( (styles) => {
@@ -307,17 +334,24 @@ class StyleGalleryDialog extends ComfyDialog {
             this.updateToolbarButtons();
             this.searchInputEl.focus();
         });
-
         // trigger enter animation
-        //requestAnimationFrame(() => {
-        //    this.element.classList.add('fade-in');
-        //});
+        //requestAnimationFrame(() => { this.element.classList.add('fade-in'); });
     }
 
+
+    /**
+     * Called when the dialog is closed. Updates the open state flag.
+     */
     onClose() {
         this.isOpen = false;
     }
 
+
+    /**
+     * Called when style data is received from the server.
+     * Initializes internal arrays and maps with the received data.
+     * @param {Array} styles - An array of style objects received from the server.
+     */
     onReceivedStyles(styles) {
         this.stylesByID          = styles;
         this.styleIDsByLowerName = Object.fromEntries(styles.map(style => [style.name.toLowerCase(), style.id]));
@@ -326,52 +360,93 @@ class StyleGalleryDialog extends ComfyDialog {
         this.updateSelection();
     }
 
+
+    /**
+     * Called when the search input loses focus.
+     * Try to keep the search input focused always.
+     */
     onInputLostFocus() {
         if( !this.isOpen ) { return; }
         setTimeout(() => { if (this.isOpen) this.searchInputEl.focus(); }, 0);
     }
 
+
+    /**
+     * Called when the text in the search input changes.
+     * Updates the search results and the active item, locking the pointer
+     * movement events temporarily to prevent they interfering with the
+     * search result autoselection.
+     * @param {HTMLInputElement} inputEl - The search input element.
+     * @param {boolean} isEnterPressed   - Indicates whether the Enter key was pressed.
+     */
     onInputChange(inputEl, isEnterPressed = false) {
+
+        // temporarily lock pointer movement events
         this.isPointerLocked = true;
         clearTimeout(this.inputChangeTimer1);
-        this.inputChangeTimer1 = setTimeout(() => {
-            this.isPointerLocked = false;
-        }, 800);
+        this.inputChangeTimer1 = setTimeout(() => { this.isPointerLocked = false; }, 800);
 
+        // debounce the search results update
         clearTimeout(this.inputChangeTimer2);
-        this.inputChangeTimer2 = setTimeout(() => {
+        this.inputChangeTimer2 = setTimeout(() =>
+        {
+            // always update the search results first so that when user
+            // presses enter it will accept the most updated result
             this.updateSearchResults(`>${inputEl.value}`);
             if( isEnterPressed ) {
                 this.userHasChosen();
             }
-            this.activeStyleID = null;
+            this.pointedStyleID = null;
             this.updateSelection();
 
         }, isEnterPressed ? 100 : 300);
 
     }
 
+
+    /**
+     * Called when a key is pressed in the search input.
+     * @param {string} key - The key that was pressed.
+     */
     onInputKeyDown(key) {
         if     ( key == 'Escape' ) { this.close(); }
         else if( key == 'Enter'  ) { this.onInputChange(this.searchInputEl, true); }
     }
 
+
+    /**
+     * Called when the mouse enters a style card.
+     * @param {HTMLElement} cardEl - The card element that was entered.
+     */
     onCardEnter(cardEl) {
         if( this.isPointerLocked ) { return; }
-        this.activeStyleID = cardEl.dataset?.id;
+        // updates the currently pointed style ID and triggers selection updates
+        this.pointedStyleID = cardEl.dataset?.id;
         this.updateSelection();
     }
 
+
+    /**
+     * Called when the mouse leaves a style card. 
+     * @param {HTMLElement} cardEl - The card element that was left.
+     */
     onCardLeave(cardEl) {
         if( this.isPointerLocked ) { return; }
-        if( this.activeStyleID === cardEl.dataset?.id ) {
-            this.activeStyleID = null;
+        // resets the currently pointed style ID and triggers selection updates
+        if( this.pointedStyleID === cardEl.dataset?.id ) {
+            this.pointedStyleID = null;
             this.updateSelection();
         }
     }
 
+
+    /**
+     * Called when a style card is clicked.
+     * @param {HTMLElement} cardEl - The card element that was clicked.
+     */
     onCardClick(cardEl) {
-        this.activeStyleID = cardEl?.dataset?.id;
+        // sets the currently pointed style ID and triggers user selection handling
+        this.pointedStyleID = cardEl?.dataset?.id;
         this.userHasChosen();
     }
 
@@ -379,21 +454,18 @@ class StyleGalleryDialog extends ComfyDialog {
     //-- DIALOG COMPONENTS ------------------------------------------------
 
     /** A spacer element in the toolbar. */
-    static get SPACER() {
-        return html("div.zipn-spacer");
-    }
+    static get SPACER() { return html("div.zipn-spacer"); }
 
     /** A divider element (vertical line) in the toolbar. */
-    static get DIVIDER() {
-        return html("div.zipn-divider");
-    }
+    static get DIVIDER() { return html("div.zipn-divider"); }
 
     /**
      * A container for displaying detailed information about the hovered style.
      * @returns {HTMLElement} An HTML structure representing the details pane.
      */
     static get DETAILS_PANE() {
-        return html("div.zipn-details-pane", {}, [
+        return html(
+        "div.zipn-details-pane", {}, [
             html("h1.zipn-details-header"),
             html("img"),
             html("p.zipn-details-description"),
@@ -405,7 +477,8 @@ class StyleGalleryDialog extends ComfyDialog {
      * @returns {HTMLElement} An HTML structure representing the search results pane.
      */
     static get SEARCH_RESULTS_PANE() {
-        return html("div.zipn-search-results-pane", {}, [
+        return html(
+        "div.zipn-search-results-pane", {}, [
             html("div.zipn-style-grid", { id: "zipn-search-results" })
         ]);
     }
@@ -444,7 +517,6 @@ class StyleGalleryDialog extends ComfyDialog {
         ]);
     }
 
-
     /**
      * Creates an input search bar for searching within the gallery dialog.
      * @returns {HTMLElement} An HTML structure representing a search bar.
@@ -464,22 +536,6 @@ class StyleGalleryDialog extends ComfyDialog {
             StyleGalleryDialog.DIVIDER,
         ]);
     }
-
-    /**
-     * Creates the main content for the style gallery dialog.
-     * @returns {HTMLElement} An HTML structure representing the dialog's main content.
-     * It includes a search bar and two columns: details pane and search results pane.
-     */
-    createDialogContent() {
-        return html("div.zipn-dialog", {}, [
-            this.createSearchBar(),
-            html("div.zipn-two-columns", {}, [
-                StyleGalleryDialog.DETAILS_PANE,
-                StyleGalleryDialog.SEARCH_RESULTS_PANE,
-            ]),
-        ]);
-    }
-
 }
 
 
