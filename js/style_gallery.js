@@ -43,30 +43,33 @@ class StyleGalleryDialog extends ComfyDialog {
             () => this.close() //< close callback
         );
 
-        this.stylesByID          = [];
-        this.styleIDsByLowerName = {};
-
+        // Variables used to store dialog states,
+        // which should be re-initialized every time the dialog is launched
+        this.isOpen            = false;
+        this.isPointerLocked   = false;
         this.initialStyleName  = ""; //< the initial style name (before applying the selected one)
         this.initialStyleID    = null; //< the initial style ID (before applying the selected one)
         this.searchStyleID     = null;
         this.activeStyleID     = null; //< the style name that is currently selected (if any)
         this.oldSelectionID    = null;
+        this.textFilter        = "";     //< text entered by the user to filter styles (case-insensitive)
+        this.categoryFilter    = "";     //< "photo", "illustration", "wild", "custom" (empty means all categories)
+        this.viewMode          = "grid"; //< "grid" or "list"
 
-        this.isOpen            = false;
-        this.isPointerLocked   = false;
-        this.inputChangeTimer1 = null; //< timer used by the 'onInputChange' event
-        this.inputChangeTimer2 = null; //< timer used by the 'onInputChange' event
+        // Internal variables:
+        this.stylesByID          = [];   //< an array to store styles in ID order (for fast access)
+        this.styleIDsByLowerName = {};   //< map lowercase style names to their IDs.
+        this.inputChangeTimer1   = null; //< timer used by the 'onInputChange' event
+        this.inputChangeTimer2   = null; //< timer used by the 'onInputChange' event
 
-        this.textFilter        = "";
-        this.categoryFilter    = "";     // "", "photo", "illustration", "wild", "custom"
-        this.viewMode          = "grid"; // "grid" or "list"
+        // Dialog elements:
         this.searchInputEl     = this.element.querySelector('#zipn-search-input');
         this.searchResultsEl   = this.element.querySelector('#zipn-search-results');
         this.detailsHeaderEl   = this.element.querySelector('.zipn-details-pane h1');
         this.detailsImageEl    = this.element.querySelector('.zipn-details-pane img');
         this.detailsTextEl     = this.element.querySelector('.zipn-details-pane p');
         this.onSelectStyle     = null;
-        // toolbar buttons
+        // (toolbar buttons)
         this.tb_allButtonEl    = this.element.querySelector('#zipn-all-btn');
         this.tb_photoButtonEl  = this.element.querySelector('#zipn-photo-btn');
         this.tb_illusButtonEl  = this.element.querySelector('#zipn-illus-btn');
@@ -75,17 +78,17 @@ class StyleGalleryDialog extends ComfyDialog {
         this.tb_gridButtonEl   = this.element.querySelector('#zipn-grid-btn');
         this.tb_listButtonEl   = this.element.querySelector('#zipn-list-btn');
 
-        this.searchInputEl.addEventListener('input'  , (e) => { this.onInputChange(e.target); });
-        this.searchInputEl.addEventListener('keydown', (e) => { this.onInputKeyDown(e.key); });
 
+        // event listeners
         const CARD_SELECTOR = '.zipn-style-grid-card, .zipn-style-list-card';
         setupCardHoverListeners( this.searchResultsEl, CARD_SELECTOR,
             (card) => { this.onCardEnter(card); },
             (card) => { this.onCardLeave(card); },
             (card) => { this.onCardClick(card); }
         );
-        this.searchInputEl?.addEventListener('blur', () => { this.onInputLostFocus(); } );
-        this.updateToolbarButtons();
+        this.searchInputEl.addEventListener('input'  , (e) => { this.onInputChange(e.target); });
+        this.searchInputEl.addEventListener('keydown', (e) => { this.onInputKeyDown(e.key); });
+        this.searchInputEl.addEventListener('blur'   , ()  => { this.onInputLostFocus(); } );
     }
 
 
@@ -110,8 +113,7 @@ class StyleGalleryDialog extends ComfyDialog {
 
         if( titleEl ) { titleEl.textContent = title; }
         dialog.onSelectStyle = onSelectStyle;
-        dialog.initialStyleName = styleName;
-        dialog.onOpen();
+        dialog.onOpen(styleName);
     }
 
 
@@ -122,6 +124,16 @@ class StyleGalleryDialog extends ComfyDialog {
         this.onClose();
         super.close();
     }
+
+    userHasChosen() {
+        const selectionID = this.activeStyleID ? this.activeStyleID : this.searchStyleID;
+        const style       = selectionID != null ? this.stylesByID[selectionID] : null;
+        if( style ) {
+            this.onSelectStyle?.(style.name);
+            this.close();
+        }
+    }
+
 
 
     /**
@@ -211,7 +223,6 @@ class StyleGalleryDialog extends ComfyDialog {
 
         if( this.textFilter ) { this.searchStyleID = filteredStyles[0]?.id; }
         else                  { this.searchStyleID = null; }
-        console.log("##>> searchStyleID: ", this.searchStyleID);
         this.updateSelection(true);
     }
 
@@ -272,26 +283,35 @@ class StyleGalleryDialog extends ComfyDialog {
 
     //-- EVENTS -----------------------------------------------------------
 
-    onOpen() {
-        this.isOpen = true;
+    onOpen(styleName) {
 
-        // make the dialog visible and clear input
-        this.show();
+        // initialize variables as if the dialog had just been created
+        this.isOpen              = true;
+        this.isPointerLocked     = false;
+        this.initialStyleName    = styleName;
         this.searchStyleID       = null;
         this.activeStyleID       = null;
         this.oldSelectionID      = null;
         this.textFilter          = '';
         this.searchInputEl.value = '';
+        this.categoryFilter      = "";
 
         // load style data from server
-        fetchLastVersionStyles( (styles) => { this.onReceivedStyles(styles); });
-        requestAnimationFrame( () => { this.searchInputEl.focus(); });
+        fetchLastVersionStyles( (styles) => {
+            this.onReceivedStyles(styles);
+        });
+
+        // 
+        requestAnimationFrame( () => {
+            this.show();
+            this.updateToolbarButtons();
+            this.searchInputEl.focus();
+        });
 
         // trigger enter animation
         //requestAnimationFrame(() => {
         //    this.element.classList.add('fade-in');
         //});
-        
     }
 
     onClose() {
@@ -311,23 +331,29 @@ class StyleGalleryDialog extends ComfyDialog {
         setTimeout(() => { if (this.isOpen) this.searchInputEl.focus(); }, 0);
     }
 
-    onInputChange(inputEl) {
-        this.activeStyleID   = null;
+    onInputChange(inputEl, isEnterPressed = false) {
         this.isPointerLocked = true;
         clearTimeout(this.inputChangeTimer1);
         this.inputChangeTimer1 = setTimeout(() => {
             this.isPointerLocked = false;
-        }, 1500);
+        }, 800);
 
         clearTimeout(this.inputChangeTimer2);
         this.inputChangeTimer2 = setTimeout(() => {
             this.updateSearchResults(`>${inputEl.value}`);
-        }, 300);
+            if( isEnterPressed ) {
+                this.userHasChosen();
+            }
+            this.activeStyleID = null;
+            this.updateSelection();
+
+        }, isEnterPressed ? 100 : 300);
 
     }
 
     onInputKeyDown(key) {
-        if( key == 'Escape' ) { this.close(); }
+        if     ( key == 'Escape' ) { this.close(); }
+        else if( key == 'Enter'  ) { this.onInputChange(this.searchInputEl, true); }
     }
 
     onCardEnter(cardEl) {
@@ -345,10 +371,8 @@ class StyleGalleryDialog extends ComfyDialog {
     }
 
     onCardClick(cardEl) {
-        const styleID = cardEl?.dataset?.id;
-        const style   = styleID != null ? this.stylesByID[styleID] : null;
-        if( style ) { this.onSelectStyle?.(style.name); }
-        this.close();
+        this.activeStyleID = cardEl?.dataset?.id;
+        this.userHasChosen();
     }
 
 
