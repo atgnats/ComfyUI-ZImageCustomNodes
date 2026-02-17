@@ -185,11 +185,12 @@ class StyleGalleryDialog extends ComfyDialog {
 
         // update details pane
         const style       = detailsID != null ? this.stylesByID[ detailsID ] : null;
-        const cacheBuster = this.cacheBuster;
+        const cacheBuster = this.cacheBuster ? '&cache=' + this.cacheBuster : '';
+
         this.detailsHeaderEl.textContent = style?.name        || "";
         this.detailsTextEl.textContent   = style?.description || "";
         if( style?.thumbnail ) {
-            this.detailsImageEl.src              = style.thumbnail + '&cache=' + cacheBuster;
+            this.detailsImageEl.src              = style.thumbnail + cacheBuster;
             this.detailsImageEl.style.visibility = 'visible';
         } else {
             this.detailsImageEl.style.visibility = 'hidden';
@@ -235,9 +236,12 @@ class StyleGalleryDialog extends ComfyDialog {
             this.textFilter = textFilter;
         }
 
+        // cache buster used to force re-fetching of images from cache each hour
+        this.cacheBuster = Math.floor(Date.now() / 3600000);
+
         // apply filters and re-render gallery
         const filteredStyles = StyleGalleryDialog.applyFilter( this.stylesByID, this.textFilter, this.categoryFilter );
-        StyleGalleryDialog.renderResults( this.searchResultsEl, this.viewMode, filteredStyles, this.initialStyleID );
+        StyleGalleryDialog.renderResults( this.searchResultsEl, this.viewMode, filteredStyles, this.initialStyleID, this.cacheBuster );
 
         if( this.textFilter ) { this.searchStyleID = filteredStyles[0]?.id; }
         else                  { this.searchStyleID = null; }
@@ -248,24 +252,34 @@ class StyleGalleryDialog extends ComfyDialog {
     /**
      * Renders the gallery grid with the provided visual styles.
      *
-     * This static method generates HTML content for displaying a
-     * list/grid of styles based on the specified view mode.
+     * This static method generates HTML content for displaying a list or grid
+     * of styles based on the specified view mode. Each style is represented as
+     * an object in the 'styles' array and includes properties such as
+     * 'id', 'name', and 'thumbnail'.
      *
-     * @param {HTMLElement} containerEl - The container element where the grid will be rendered.
-     * @param {string}      viewMode    - The current view mode ('grid' or 'list') that determines
-     *                                    the layout of each item.
-     * @param {Array<Object>} styles    - An array of objects representing the visual styles
-     *                                    to display.
+     * @param {HTMLElement} containerEl    - The container element where the gallery will be rendered.
+     * @param {string}      viewMode       - The current view mode ('grid' or 'list') that determines
+     *                                       the layout of each item in the gallery. This parameter
+     *                                       is used to apply appropriate CSS classes.
+     * @param {Array<Object>} styles       - An array of objects representing the visual styles to display.
+     * @param {string|null} initialStyleID - The ID of the initially selected style, which will receive an
+     *                                       additional CSS class ('initial') for highlighting.
+     * @param {string|null} cacheBuster_   - A string used as a cache buster appended to each thumbnail image URL
+     *                                       to ensure that the browser fetches the latest version of images.
+     * @example
+     * const styles = [
+     *   { id: 'style-1', name: 'Modern Look', thumbnail: '/images/modern.jpg' },
+     *   { id: 'style-2', name: 'Retro Feel', thumbnail: '/images/retro.jpg' }
+     * ];
+     * renderResults(document.getElementById('gallery-container'), 'grid', styles, 'style-1', Date.now());
      */
-    static renderResults(containerEl, viewMode, styles, initialStyleID = null) {
-        this.cacheBuster = Math.floor(Date.now() / 3600000);
+    static renderResults(containerEl, viewMode, styles, initialStyleID = null, cacheBuster_ = null) {
         const baseClass   = `zipn-style-${viewMode}`;
-        const cacheBuster = this.cacheBuster;
-
+        const cacheBuster = cacheBuster_ ? '&cache=' + cacheBuster_ : '';
         containerEl.className = baseClass;
         containerEl.innerHTML = styles.map( style => {
             const extraClass = style.id === initialStyleID ? ' initial' : '';
-            const imageSrc   = style.thumbnail + '&cache=' + cacheBuster;
+            const imageSrc   = style.thumbnail + cacheBuster;
             return `
                 <div class="${baseClass}-card${extraClass}" id="zipn-style-${style.id}" data-id="${style.id}">
                     <img src="${imageSrc}" loading="lazy" alt="${style.name}">
