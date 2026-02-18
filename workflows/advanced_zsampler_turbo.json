@@ -1,8 +1,8 @@
 {
   "id": "86aac45c-36d2-43be-8e53-2afb5f63d889",
   "revision": 0,
-  "last_node_id": 67,
-  "last_link_id": 100,
+  "last_node_id": 68,
+  "last_link_id": 104,
   "nodes": [
     {
       "id": 20,
@@ -201,7 +201,7 @@
           "name": "",
           "type": "MODEL",
           "links": [
-            97
+            101
           ]
         }
       ],
@@ -335,7 +335,7 @@
           "name": "LATENT",
           "type": "LATENT",
           "links": [
-            99
+            103
           ]
         }
       ],
@@ -400,7 +400,7 @@
         {
           "name": "samples",
           "type": "LATENT",
-          "link": 100
+          "link": 104
         },
         {
           "name": "vae",
@@ -487,7 +487,7 @@
           "name": "CONDITIONING",
           "type": "CONDITIONING",
           "links": [
-            98
+            102
           ]
         },
         {
@@ -510,8 +510,8 @@
       "shape": 1
     },
     {
-      "id": 67,
-      "type": "ZSamplerTurboAdvanced2 //ZImagePowerNodes",
+      "id": 68,
+      "type": "ZSamplerTurboAdvanced //ZImagePowerNodes",
       "pos": [
         880,
         150
@@ -527,17 +527,17 @@
         {
           "name": "model",
           "type": "MODEL",
-          "link": 97
+          "link": 101
         },
         {
           "name": "positive",
           "type": "CONDITIONING",
-          "link": 98
+          "link": 102
         },
         {
           "name": "latent_input",
           "type": "LATENT",
-          "link": 99
+          "link": 103
         }
       ],
       "outputs": [
@@ -545,12 +545,12 @@
           "name": "latent_output",
           "type": "LATENT",
           "links": [
-            100
+            104
           ]
         }
       ],
       "properties": {
-        "Node name for S&R": "ZSamplerTurboAdvanced2 //ZImagePowerNodes"
+        "Node name for S&R": "ZSamplerTurboAdvanced //ZImagePowerNodes"
       },
       "widgets_values": [
         1,
@@ -558,7 +558,7 @@
         9,
         1,
         null,
-        1,
+        0,
         "experimental",
         "image_size",
         0.12,
@@ -640,32 +640,32 @@
       "STRING"
     ],
     [
-      97,
+      101,
       39,
       0,
-      67,
+      68,
       0,
       "MODEL"
     ],
     [
-      98,
+      102,
       43,
       0,
-      67,
+      68,
       1,
       "CONDITIONING"
     ],
     [
-      99,
+      103,
       32,
       0,
-      67,
+      68,
       2,
       "LATENT"
     ],
     [
-      100,
-      67,
+      104,
+      68,
       0,
       8,
       0,
@@ -692,8 +692,8 @@
     "ds": {
       "scale": 0.8264462809917354,
       "offset": [
-        57.94964515988231,
-        140.79604745286966
+        8.566520159882304,
+        114.0909693278697
       ]
     },
     "frontendVersion": "1.37.11",

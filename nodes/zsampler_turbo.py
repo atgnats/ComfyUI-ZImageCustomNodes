@@ -17,11 +17,11 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 """
 from typing                       import Any
 from comfy_api.latest             import io
-from ..zsampler_turbo_advanced_2  import ZSamplerTurboAdvanced2
+from .zsampler_turbo_advanced  import ZSamplerTurboAdvanced
 
 
 class ZSamplerTurbo(io.ComfyNode):
-    xTITLE         = "Z-Sampler Turbo (old version)"
+    xTITLE         = "Z-Sampler Turbo"
     xCATEGORY      = ""
     xCOMFY_NODE_ID = ""
     xDEPRECATED    = False
@@ -97,7 +97,7 @@ class ZSamplerTurbo(io.ComfyNode):
             initial_noise_tweaking = float(initial_noise_tweaking) / 100
 
         # use the advanced node code to run the process
-        return ZSamplerTurboAdvanced2.execute(
+        return ZSamplerTurboAdvanced.execute(
             model                  = model,
             positive               = positive,
             latent_input           = latent_input,

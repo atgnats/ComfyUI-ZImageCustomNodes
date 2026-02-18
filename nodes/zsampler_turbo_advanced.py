@@ -1,5 +1,5 @@
 """
-File    : zsampler_turbo_advanced_2.py
+File    : zsampler_turbo_advanced.py
 Purpose : Node for denoising latent images with Z-Image Turbo (ZIT) using a set of custom sigmas,
           (this advanced version allows you to manually configure additional parameters)
 Author  : Martin Rizzo | <martinrizzo@gmail.com>
@@ -27,7 +27,7 @@ from .lib.system        import logger
 from .lib.progress_bar  import ProgressPreview
 
 
-class ZSamplerTurboAdvanced2(io.ComfyNode):
+class ZSamplerTurboAdvanced(io.ComfyNode):
     xTITLE         = "Z-Sampler Turbo (Advanced)"
     xCATEGORY      = ""
     xCOMFY_NODE_ID = ""
