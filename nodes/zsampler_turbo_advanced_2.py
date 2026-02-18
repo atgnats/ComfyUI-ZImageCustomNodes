@@ -66,19 +66,22 @@ class ZSamplerTurboAdvanced2(io.ComfyNode):
                                       tooltip="The amount of denoising applied, lower values will maintain the structure of the initial image allowing for image to image sampling.",
                                      ),
                 io.Custom("ZIPN_DIVIDER").Input("divider"),
-                io.Combo.Input       ("noise_bias_method", default="experimental", options=["experimental", "accurate"],
-                                      tooltip="Method used to calculate the bias in each channel of the initial noise. "
-                                              "`experimental`: Denoises a blank latent image to calculate the bias. "
-                                              "`accurate`: Denoises a random latent image to calculate the bias. "
+                io.Float.Input       ("initial_noise_tweaking", default=0.00, min=0.00, max=1.00, step=0.05,
+                                      tooltip="The level of adjustment of the initial noise. (0 means no adjustment).",
                                      ),
-                io.Combo.Input       ("noise_bias_size", default="source", options=["source", "1024px", "512px", "256px"],
+                io.Combo.Input       ("noise_bias_estimation", default="experimental", options=["experimental", "accurate"],
+                                      tooltip="Method used to estimate the bias in each channel of the initial noise. "
+                                              "`experimental`: Calculate the bias by denoising a latent image with minimal noise. "
+                                              "`accurate`: Calculate the bias by denoising a fully noisy latent image. "
+                                     ),
+                io.Combo.Input       ("noise_bias_sample_size", default="image_size", options=["image_size", "1024px", "512px", "256px"],
                                       tooltip="The size of the latent image used to calculate the bias. "
                                               "The smaller the image size, the faster the calculation."
                                      ),
-                io.Float.Input       ("noise_bias_scale", default=0.11, min=0.00, max=1.00, step=0.01,
+                io.Float.Input       ("noise_bias_scale", default=0.12, min=0.00, max=1.00, step=0.01,
                                       tooltip="The level of automatic adjustament from the calculated noise bias to apply before the first denoising step. (0 means no automatic adjustment).",
                                      ),
-                io.Float.Input       ("noise_overdose", default=0.34, min=-1.00, max=1.00, step=0.01,
+                io.Float.Input       ("noise_overdose", default=0.33, min=-1.00, max=1.00, step=0.01,
                                       tooltip="The amount of overamplitude in the initial noise generation. (negative values will reduce the amplitude)."
                                      ),
             ],
@@ -91,17 +94,26 @@ class ZSamplerTurboAdvanced2(io.ComfyNode):
     @classmethod
     def execute(cls,
                 model,
-                positive         : list,
-                latent_input     : dict[str, Any],
-                seed             : int,
-                steps            : int,
-                denoise          : float,
-                noise_bias_method: str,
-                noise_bias_size  : str | int | None,
-                noise_bias_scale : float,
-                noise_overdose   : float,
+                positive              : list,
+                latent_input          : dict[str, Any],
+                seed                  : int,
+                steps                 : int,
+                denoise               : float,
+                initial_noise_tweaking: float,
+                noise_bias_estimation : str,
+                noise_bias_sample_size: str | int | None,
+                noise_bias_scale      : float,
+                noise_overdose        : float,
                 **kwargs
                 ) -> io.NodeOutput:
+
+        # tweaking level determines the amount of adjustment applied
+        noise_bias_scale *= initial_noise_tweaking
+        noise_overdose   *= initial_noise_tweaking
+
+        # the "accurate" estimation method has a more sensitive scale
+        if noise_bias_estimation == "accurate":
+            noise_bias_scale /= 2
 
         # create a progress bar from 0 to 100
         progress = ProgressPreview.from_comfyui( model, 100 )
@@ -112,10 +124,10 @@ class ZSamplerTurboAdvanced2(io.ComfyNode):
         # `forced_size` is noise_bias_size converted to integer (pixels)
         # or None if "source" option was selected
         forced_size = None
-        if isinstance(noise_bias_size, str) and noise_bias_size.endswith("px"):
-            forced_size = int(noise_bias_size[:-2])
-        elif isinstance(noise_bias_size, (int,float)):
-            forced_size = int(noise_bias_size)
+        if isinstance(noise_bias_sample_size, str) and noise_bias_sample_size.endswith("px"):
+            forced_size = int(noise_bias_sample_size[:-2])
+        elif isinstance(noise_bias_sample_size, (int,float)):
+            forced_size = int(noise_bias_sample_size)
 
 
         # Sigmas are divided into 3 stages:
@@ -183,11 +195,11 @@ class ZSamplerTurboAdvanced2(io.ComfyNode):
 
         # `initial_noise_bias` is calculated ONLY if the user set a non-zero scale
         # (this calculation adds an extra step to the diffusion process)
-        if noise_bias_scale != 0 and noise_bias_method != "none" and denoise >= 0.99:
+        if noise_bias_scale != 0 and noise_bias_estimation != "none" and denoise >= 0.99:
             bias = cls.calculate_denoise_bias(latent_input, model, seed, positive, positive,
                                               sampler     = sampler,
                                               sigmas      = [sigma0, sigmas1[0]],
-                                              method      = noise_bias_method,
+                                              method      = noise_bias_estimation,
                                               forced_size = forced_size,
                                               progress_preview = ProgressPreview( 100, parent=(progress,0,100//steps) ),
                                               )
