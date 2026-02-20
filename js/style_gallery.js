@@ -154,9 +154,10 @@ class StyleGalleryDialog extends ComfyDialog {
 
         const CARD_SELECTOR = '.zipn-style-grid-card, .zipn-style-list-card';
         setupCardHoverListeners( this.searchResultsEl, CARD_SELECTOR,
-            (card) => { this.onCardEnter(card); },
-            (card) => { this.onCardLeave(card); },
-            (card) => { this.onCardClick(card); }
+            (card     ) => { this.onCardEnter(card); },
+            (_card    ) => { },
+            (card     ) => { this.onCardClick(card); },
+            (container) => { this.onCardContainerLeave(container); }
         );
         this.searchInputEl.addEventListener('input'  , (e) => { this.onInputChange(e.target); });
         this.searchInputEl.addEventListener('keydown', (e) => { if (this.onInputKeyDown(e.key)) { event.preventDefault(); } });
@@ -563,21 +564,6 @@ class StyleGalleryDialog extends ComfyDialog {
         this.updateSelection();
     }
 
-
-    /**
-     * Called when the mouse leaves a style card. 
-     * @param {HTMLElement} cardEl - The card element that was left.
-     */
-    onCardLeave(cardEl) {
-        if( this.isPointerLocked ) { return; }
-        // resets the currently pointed style ID and triggers selection updates
-        if( this.pointedStyleID === Number(cardEl.dataset?.id) ) {
-            this.pointedStyleID = null;
-            this.updateSelection();
-        }
-    }
-
-
     /**
      * Called when a style card is clicked.
      * @param {HTMLElement} cardEl - The card element that was clicked.
@@ -586,6 +572,17 @@ class StyleGalleryDialog extends ComfyDialog {
         // sets the currently pointed style ID and triggers user selection handling
         this.pointedStyleID = Number(cardEl?.dataset?.id);
         this.userHasChosen();
+    }
+
+    /**
+     * Called when the mouse leaves the card container.
+     * This function is responsible for resetting the currently pointed style ID
+     * when the user moves the mouse out of the area containing the style cards.
+     */
+    onCardContainerLeave() {
+        if( this.isPointerLocked ) { return; }
+        this.pointedStyleID = null;
+        this.updateSelection();
     }
 
 
