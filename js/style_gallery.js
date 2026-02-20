@@ -98,8 +98,8 @@ class StyleGalleryDialog extends ComfyDialog {
         /** @type {Object<string, number>} Map of lowercase style names to their IDs. */
         this.styleIDsByLowerName = {};
 
-        /** @type {number|null} Timer used by the 'onInputChange' event. */
-        this.inputChangeTimer1 = null;
+        /** @type {number|null} Timer used by the lockPointer method. */
+        this.pointerLockedTimer = null;
 
         /** @type {number|null} Timer used by the 'onInputChange' event. */
         this.inputChangeTimer2 = null;
@@ -237,10 +237,10 @@ class StyleGalleryDialog extends ComfyDialog {
 
     /**
      * Updates the selected style and displays its details in the dialog.
-     * @param {boolean} force - If true, updates the selection even if
-     *                          no change occurred. Defaults to false.
+     * @param {boolean} keyboard - If true, the selection is updated via keyboard navigation. Defaults to false.
+     * @param {boolean} force    - If true, updates the selection even if no change occurred. Defaults to false.
      */
-    updateSelection(force=false) {
+    updateSelection(keyboard=false, force=false) {
         const newSelectionID = this.getSelectionID();
         const detailsID      = newSelectionID ? newSelectionID : this.initialStyleID;
         if( !force && newSelectionID === this.oldSelectionID ) { return; }
@@ -254,6 +254,10 @@ class StyleGalleryDialog extends ComfyDialog {
         // activate the card with the new style
         const newCardEl = newSelectionID != null ? this.element.querySelector(`#zipn-style-${newSelectionID}`) : null;
         if( newCardEl ) { newCardEl.classList.add('active'); }
+        if( newCardEl && keyboard ) {
+            // if the event that caused the update is a keyboard event, scroll to element
+            newCardEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
 
         // update details pane
         const style       = detailsID != null ? this.stylesByID[ detailsID ] : null;
@@ -318,7 +322,20 @@ class StyleGalleryDialog extends ComfyDialog {
 
         if( this.textFilter ) { this.resultIndex =  0; }
         else                  { this.resultIndex = -1; }
-        this.updateSelection(true);
+        this.updateSelection(false,true);
+    }
+
+
+    /**
+     * Temporarily locks the pointer movement events.
+     *
+     * This method sets a flag to prevent pointer movement events from being
+     * processed, the flag is reset after a short delay (800 milliseconds).
+     */
+    lockPointer() {
+        this.isPointerLocked = true;
+        clearTimeout(this.pointerLockedTimer);
+        this.pointerLockedTimer = setTimeout(() => { this.isPointerLocked = false; }, 800);
     }
 
 
@@ -470,9 +487,7 @@ class StyleGalleryDialog extends ComfyDialog {
     onInputChange(inputEl, isEnterPressed = false) {
 
         // temporarily lock pointer movement events
-        this.isPointerLocked = true;
-        clearTimeout(this.inputChangeTimer1);
-        this.inputChangeTimer1 = setTimeout(() => { this.isPointerLocked = false; }, 800);
+        this.lockPointer();
 
         // debounce the search results update
         clearTimeout(this.inputChangeTimer2);
@@ -530,7 +545,8 @@ class StyleGalleryDialog extends ComfyDialog {
             if( resultIndex <  0                        ) { resultIndex = oldResultIndex; }
             this.resultIndex    = resultIndex;
             this.pointedStyleID = null;
-            this.updateSelection();
+            this.lockPointer();
+            this.updateSelection(true);
         }
         return ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(key);
     }
