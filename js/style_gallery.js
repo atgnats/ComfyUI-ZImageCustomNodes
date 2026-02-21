@@ -63,20 +63,21 @@ class StyleGalleryDialog extends ComfyDialog {
         /** @type {string} The initial style name (before applying the selected one). */
         this.initialStyleName = "";
 
-        /** @type {string} The initial style name (before applying the selected one). */
-        this.initialStyleID = null;
+        /** @type {number|null} ID of the initial card/style (which will be highlighted). */
+        this.initialCardID = null;
 
-        /** @type {number|null} ID of the style being pointed by the mouse. */
-        this.pointedStyleID = null;
+        /** @type {number|null} ID of the card/style being pointed by the mouse. */
+        this.hoveredCardID = null;
+
+        /** @type {number|null} Index of the selected style in 'resultStyles'. */
+        // focusedCardIndex
+        this.resultIndex = null;
 
         /** @type {Array<object>} An array of styles that match the search text. */
         this.resultStyles = [];
 
         /** @type {number} Number of columns used in the search results grid. */
         this.resultColumns = 4;
-
-        /** @type {number} Index of the selected style in 'resultStyles'. */
-        this.resultIndex = -1;
 
         /** @type {number|null} ID of the previously selected style. */
         this.oldSelectionID = null;
@@ -231,8 +232,8 @@ class StyleGalleryDialog extends ComfyDialog {
      * @returns {string|null} The selected style's ID or null if no selection exists.
      */
     getSelectionID() {
-        const resultID = (this.resultIndex >= 0) ? this.resultStyles[this.resultIndex]?.id : null;
-        return (this.pointedStyleID != null) ? this.pointedStyleID : resultID;
+        const resultID = (this.resultIndex != null) ? this.resultStyles[this.resultIndex]?.id : null;
+        return (this.hoveredCardID != null) ? this.hoveredCardID : resultID;
     }
 
 
@@ -243,7 +244,7 @@ class StyleGalleryDialog extends ComfyDialog {
      */
     updateSelection(keyboard=false, force=false) {
         const newSelectionID = this.getSelectionID();
-        const detailsID      = newSelectionID != null ? newSelectionID : this.initialStyleID;
+        const detailsID      = newSelectionID != null ? newSelectionID : this.initialCardID;
         if( !force && newSelectionID === this.oldSelectionID ) { return; }
 
         // deactivate the card with the old style
@@ -319,26 +320,12 @@ class StyleGalleryDialog extends ComfyDialog {
 
         // apply filters and re-render gallery
         this.resultStyles = StyleGalleryDialog.applyFilter( this.stylesByID, this.textFilter, this.categoryFilter );
-        StyleGalleryDialog.renderResults( this.searchResultsEl, this.viewMode, this.resultStyles, this.initialStyleID, this.cacheBuster );
+        StyleGalleryDialog.renderResults( this.searchResultsEl, this.viewMode, this.resultStyles, this.initialCardID, this.cacheBuster );
 
-        if( this.textFilter ) { this.resultIndex =  0; }
-        else                  { this.resultIndex = -1; }
+        if( this.textFilter ) { this.resultIndex = 0;    }
+        else                  { this.resultIndex = null; }
         this.updateSelection(false,true);
     }
-
-
-    /**
-     * Temporarily locks the pointer movement events.
-     *
-     * This method sets a flag to prevent pointer movement events from being
-     * processed, the flag is reset after a short delay (800 milliseconds).
-     */
-    lockPointer() {
-        this.isPointerLocked = true;
-        clearTimeout(this.pointerLockedTimer);
-        this.pointerLockedTimer = setTimeout(() => { this.isPointerLocked = false; }, 800);
-    }
-
 
     /**
      * Renders the gallery grid with the provided visual styles.
@@ -418,10 +405,10 @@ class StyleGalleryDialog extends ComfyDialog {
         // initialize variables as if the dialog had just been created
         this.isOpen              = true;
         this.initialStyleName    = styleName;
-        this.initialStyleID      = null;
+        this.initialCardID       = null;
         this.resultStyles        = [];
-        this.resultIndex         = -1;
-        this.pointedStyleID      = null;
+        this.resultIndex         = null;
+        this.hoveredCardID       = null;
         this.oldSelectionID      = null;
         this.textFilter          = '';
         this.categoryFilter      = "";
@@ -429,26 +416,32 @@ class StyleGalleryDialog extends ComfyDialog {
         this.searchInputEl.value = '';
         // `this.viewMode` is not set here because it persists between dialog reopenings
 
-        // load style data from server and move the scroll the first card
-        fetchLastVersionStyles( (styles) => {
-            this.onReceivedStyles(styles);
-            // requestAnimationFrame( () => {
-            //     requestAnimationFrame( () => {
-            //     });
-            // });
-        });
-
-        // 
-        requestAnimationFrame( () =>
+        // load style data from server and focus on the initial style
+        fetchLastVersionStyles( (styles) =>
         {
-            this.show();
-            this.updateToolbarButtons();
-            this.searchInputEl.focus();
+            // process the received data
+            this.onReceivedStyles(styles);
 
-            // set search scroll bar to top
-            const searchResultPaneEl = this.element.querySelector('#zipn-search-results-pane');
-            if( searchResultPaneEl ) { searchResultPaneEl.scrollTop = 0; }
+            // if the initial card is in the list of results,
+            // focus on that initial card !
+            const initialCardIndex = this.findIndexFromCardID(this.initialCardID);
+            if( initialCardIndex >= 0 ) {
+                this.resultIndex = initialCardIndex;
+                this.updateSelection();
+                requestAnimationFrame( () => {
+                //requestAnimationFrame( () => {
+                    const focusedCardID = this.resultIndex != null ? this.resultStyles[this.resultIndex]?.id : null;
+                    const focusedCardEl = this.elementFromCardID(focusedCardID);
+                    if( focusedCardEl ) { focusedCardEl.scrollIntoView({ block: 'start' }); }
+                //});
+                });
+            }
         });
+
+        this.show();
+        this.updateToolbarButtons();
+        this.searchInputEl.focus();
+
         // trigger enter animation
         //requestAnimationFrame(() => { this.element.classList.add('fade-in'); });
     }
@@ -470,7 +463,7 @@ class StyleGalleryDialog extends ComfyDialog {
     onReceivedStyles(styles) {
         this.stylesByID          = styles;
         this.styleIDsByLowerName = Object.fromEntries(styles.map(style => [style.name.toLowerCase(), style.id]));
-        this.initialStyleID      = this.styleIDsByLowerName[this.initialStyleName.toLowerCase()];
+        this.initialCardID       = this.styleIDsByLowerName[this.initialStyleName.toLowerCase()];
         this.updateSearchResults("!refresh");
         this.updateSelection();
     }
@@ -509,7 +502,7 @@ class StyleGalleryDialog extends ComfyDialog {
             if( isEnterPressed ) {
                 this.userHasChosen();
             }
-            this.pointedStyleID = null;
+            this.hoveredCardID = null;
             this.updateSelection();
 
         }, isEnterPressed ? 100 : 300);
@@ -524,37 +517,39 @@ class StyleGalleryDialog extends ComfyDialog {
      *   True if the key if handled by the method and should not be processed by the input field.
      */
     onInputKeyDown(key) {
-        const oldResultIndex = this.resultIndex;
-        let   resultIndex    = this.resultIndex;
+        let resultIndex = this.resultIndex;
 
         if     ( key === 'Escape' ) { this.close(); }
         else if( key === 'Enter'  ) { this.onInputChange(this.searchInputEl, true); }
-        else if( this.resultIndex >= 0 || this.pointedStyleID != null )
+        else if( this.resultIndex != null || this.hoveredCardID != null )
         {
             // if the current selection is determined by the mouse pointer,
             // capture that selection!
-            if( this.pointedStyleID != null ) {
-                const index = this.resultStyles.findIndex(style => style.id == this.pointedStyleID);
-                if( index >= 0 ) { resultIndex = index; }
+            if( resultIndex == null ) {
+                const hoveredIndex = this.findIndexFromCardID(this.hoveredCardID);
+                resultIndex = hoveredIndex >= 0 ? hoveredIndex : 0;
             }
 
+            // cursor key movement
+            const oldResultIndex = this.resultIndex;
             if     ( key === 'ArrowUp'    ) { resultIndex-=this.resultColumns; }
             else if( key === 'ArrowDown'  ) { resultIndex+=this.resultColumns; }
             else if( key === 'ArrowLeft'  ) { resultIndex--; }
             else if( key === 'ArrowRight' ) { resultIndex++; }
+            if( resultIndex >= this.resultStyles.length ) { resultIndex = oldResultIndex; }
+            if( resultIndex <  0                        ) { resultIndex = oldResultIndex; }
+
         }
         // if there is no selection (e.g. just opened the dialog) and user presses down,
         // first search result gets selected
-        else if( this.resultIndex === -1 && key === 'ArrowDown' ) {
+        else if( this.resultIndex == null && key === 'ArrowDown' ) {
             if( this.resultStyles ) { resultIndex = 0; }
         }
 
         // if the selected search result index is modified, update its on-screen representation
         if( this.resultIndex !== resultIndex ) {
-            if( resultIndex >= this.resultStyles.length ) { resultIndex = oldResultIndex; }
-            if( resultIndex <  0                        ) { resultIndex = oldResultIndex; }
-            this.resultIndex    = resultIndex;
-            this.pointedStyleID = null;
+            this.resultIndex   = resultIndex;
+            this.hoveredCardID = null;
             this.lockPointer();
             this.updateSelection(true);
         }
@@ -569,7 +564,7 @@ class StyleGalleryDialog extends ComfyDialog {
     onCardEnter(cardEl) {
         if( this.isPointerLocked ) { return; }
         // updates the currently pointed style ID and triggers selection updates
-        this.pointedStyleID = Number(cardEl.dataset?.id);
+        this.hoveredCardID = Number(cardEl.dataset?.id);
         this.updateSelection();
     }
 
@@ -579,7 +574,7 @@ class StyleGalleryDialog extends ComfyDialog {
      */
     onCardClick(cardEl) {
         // sets the currently pointed style ID and triggers user selection handling
-        this.pointedStyleID = Number(cardEl?.dataset?.id);
+        this.hoveredCardID = Number(cardEl?.dataset?.id);
         this.userHasChosen();
     }
 
@@ -590,10 +585,41 @@ class StyleGalleryDialog extends ComfyDialog {
      */
     onCardContainerLeave() {
         if( this.isPointerLocked ) { return; }
-        this.pointedStyleID = null;
+        this.hoveredCardID = null;
         this.updateSelection();
     }
 
+    //-- HELPERS ----------------------------------------------------------
+
+    /**
+     * Temporarily locks the pointer movement events.
+     *
+     * This method sets a flag to prevent pointer movement events from being
+     * processed, the flag is reset after a short delay (800 milliseconds).
+     */
+    lockPointer() {
+        this.isPointerLocked = true;
+        clearTimeout(this.pointerLockedTimer);
+        this.pointerLockedTimer = setTimeout(() => { this.isPointerLocked = false; }, 800);
+    }
+
+    /**
+     * Finds the index of a style card in the `resultStyles` array based on its ID.
+     * @param {number|null} cardID - The ID of the style card to find.
+     * @returns {number} The index of the card with the specified ID, or -1 if not found.
+     */
+    findIndexFromCardID(cardID) {
+        return cardID != null ? this.resultStyles.findIndex(card => card.id == cardID) : -1;
+    }
+
+    /**
+     * Returns the HTML element corresponding to the style card with the given ID.
+     * @param {number|null} cardID - The ID of the style card whose corresponding element is sought.
+     * @returns {Element|null} The HTML element associated with the given card ID, or null if no match is found.
+     */
+    elementFromCardID(cardID) {
+        return cardID != null ? this.element.querySelector(`#zipn-style-${cardID}`) : null;
+    }
 
     //-- DIALOG COMPONENTS ------------------------------------------------
 
