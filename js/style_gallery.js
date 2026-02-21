@@ -427,18 +427,27 @@ class StyleGalleryDialog extends ComfyDialog {
         this.categoryFilter      = "";
         this.isPointerLocked     = false;
         this.searchInputEl.value = '';
-        // `this.viewMode` isn't set here becouse is kept between dialog reopens
+        // `this.viewMode` is not set here because it persists between dialog reopenings
 
-        // load style data from server
+        // load style data from server and move the scroll the first card
         fetchLastVersionStyles( (styles) => {
             this.onReceivedStyles(styles);
+            // requestAnimationFrame( () => {
+            //     requestAnimationFrame( () => {
+            //     });
+            // });
         });
 
         // 
-        requestAnimationFrame( () => {
+        requestAnimationFrame( () =>
+        {
             this.show();
             this.updateToolbarButtons();
             this.searchInputEl.focus();
+
+            // set search scroll bar to top
+            const searchResultPaneEl = this.element.querySelector('#zipn-search-results-pane');
+            if( searchResultPaneEl ) { searchResultPaneEl.scrollTop = 0; }
         });
         // trigger enter animation
         //requestAnimationFrame(() => { this.element.classList.add('fade-in'); });
@@ -613,7 +622,7 @@ class StyleGalleryDialog extends ComfyDialog {
      */
     static get SEARCH_RESULTS_PANE() {
         return html(
-        "div.zipn-search-results-pane", {}, [
+        "div.zipn-search-results-pane", { id: "zipn-search-results-pane" }, [
             html("div.zipn-style-grid", { id: "zipn-search-results" })
         ]);
     }
