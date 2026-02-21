@@ -243,7 +243,7 @@ class StyleGalleryDialog extends ComfyDialog {
      */
     updateSelection(keyboard=false, force=false) {
         const newSelectionID = this.getSelectionID();
-        const detailsID      = newSelectionID ? newSelectionID : this.initialStyleID;
+        const detailsID      = newSelectionID != null ? newSelectionID : this.initialStyleID;
         if( !force && newSelectionID === this.oldSelectionID ) { return; }
 
         // deactivate the card with the old style
