@@ -679,7 +679,7 @@ _CustomStyles = """
 """
 
 
-PREDEFINED_STYLE_GROUPS_0_09 : list[StyleGroup] = [
+PREDEFINED_STYLE_GROUPS_0_9 : list[StyleGroup] = [
     STYLE_GROUP_NONE,
     StyleGroup.from_string( _PhotoStyles       , category="photo"       , version="0.9.0" ),
     StyleGroup.from_string( _IllustrationStyles, category="illustration", version="0.9.0" ),

@@ -13,7 +13,7 @@
 import { api } from "../../../scripts/api.js";
 export {
     fetchLastVersionStyles,
-    fetchStyleNamesByCategory //< (old) deprecated
+    fetchStyleNamesByCategory09 //< (old) deprecated
 };
 
 
@@ -77,7 +77,7 @@ async function fetchLastVersionStyles(onResponse) {
 
 
 
-let _namesByCategory = null;
+let _namesByCategory09 = null;
 
 /**
  * Fetches an object containing style names grouped by their categories.
@@ -89,31 +89,37 @@ let _namesByCategory = null;
  *     NOTE: style names will be quoted in double quotation marks.
  *
  * @example
- * fetchStyleNamesByCategory((namesByCategory) => {
+ * fetchStyleNamesByCategory09((namesByCategory) => {
  *     for(const category in namesByCategory){
  *         console.log(`Styles in ${category}:`);
  *         namesByCategory[category].forEach(name => console.log(name));
  *     }
  * });
  */
-async function fetchStyleNamesByCategory(onResponse) {
+async function fetchStyleNamesByCategory09( onResponse) {
     if( typeof onResponse !== "function" )
     { console.error("The provided argument is not a valid function."); return; }
 
     // if it has already been queried before, returns the stored result
-    if( _namesByCategory ) { onResponse( _namesByCategory ); return; }
+    if( _namesByCategory09 ) { onResponse( _namesByCategory09 ); return; }
 
-    fetchLastVersionStyles( (styles) => {
+    try {
+        const response = await api.fetchApi("/zi_power/styles/by_version?version=0.9");
+        const styles   = await response.json();
+        if( typeof styles !== "object" )
+        { console.error("The fetching of last version style failed."); return; }
 
-        let namesByCategory = {};
-        for( const style of styles ) {
-            const name     = `"${style.name}"`; //< quoted name
-            const category = style.category;
-            if( !namesByCategory[category] ) { namesByCategory[category] = []; }
-            namesByCategory[category].push(name);
+        let namesByCategory09 = {};
+        for( let i=0 ; i<styles.length ; ++i ) {
+            const name     = `"${styles[i][0]}"`; //< quoted name
+            const category =     styles[i][1];
+            if( !namesByCategory09[category] ) { namesByCategory09[category] = []; }
+            namesByCategory09[category].push(name);
         }
-        _namesByCategory = namesByCategory;
-        onResponse( _namesByCategory );
+        _namesByCategory09 = namesByCategory09;
 
-    });
+        onResponse( _namesByCategory09 );
+    } catch (error) {
+        console.error("Failed to fetch styles:", error);
+    }
 }

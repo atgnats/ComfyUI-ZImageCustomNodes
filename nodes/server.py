@@ -20,26 +20,28 @@ from aiohttp                     import web
 from functools                   import cache
 from server                      import PromptServer
 from aiohttp                     import web
-from ..styles.predefined_styles  import PREDEFINED_STYLE_GROUPS
+from ..styles.predefined_styles  import PREDEFINED_STYLE_GROUPS, STYLE_GROUPS_BY_VERSION
 from .lib.helpers                import get_project_root
+from .lib.style_group            import StyleGroup
 routes = PromptServer.instance.routes
 
 
-@cache
-def _get_last_version_styles() -> list[list[str]]:
+
+def _style_list(style_groups: list[StyleGroup]):
     """
-    Retrieves all styles from the last version of this project.
+    Generates a list of style data for all styles in the given style groups.
+    Args:
+        style_groups (list[StyleGroup]): A list of StyleGroup objects.
     Returns:
-        list[list[str]]: A list containing lists of style data. Each inner list contains:
-                         [0] name        (str): The name of the style.
-                         [1] category    (str): The category to which the style belongs.
-                         [2] description (str): Description of the style (currently empty).
-                         [3] tags        (str): Tags associated with the style, comma-separated
-                         [4] thumbnail   (str): The filename of the thumbnail image (e.g. "casual_photo.jpg")
+        list[list[str]]: A nested list where each inner list contains the style information:
+            [0] name        (str): The name of the style.
+            [1] category    (str): The category to which the style belongs.
+            [2] description (str): Description of the style.
+            [3] tags        (str): Tags associated with the style, comma-separated
+            [4] thumbnail   (str): The filename of the thumbnail image (e.g. "casual_photo.jpg")
     """
-    LAST_VERSION_STYLE_GROUPS = PREDEFINED_STYLE_GROUPS
     styles = []
-    for style_group in LAST_VERSION_STYLE_GROUPS:
+    for style_group in style_groups:
         category = style_group.category
         for name in style_group.get_names():
             style = style_group.get_style(name)
@@ -56,6 +58,24 @@ def _get_last_version_styles() -> list[list[str]]:
             ]
             styles.append(style_data)
     return styles
+
+
+@cache
+def _cached_last_version_styles() -> list[list[str]]:
+    """
+    Returns a cached list of style data for the last version of predefined styles.
+
+    This function caches the result so that it is only computed once,
+    even if called multiple times.
+    Returns:
+        list[list[str]]: A list containing lists of style data. Each inner list contains:
+            [0] name        (str): The name of the style.
+            [1] category    (str): The category to which the style belongs.
+            [2] description (str): Description of the style (currently empty).
+            [3] tags        (str): Tags associated with the style, comma-separated
+            [4] thumbnail   (str): The filename of the thumbnail image (e.g. "casual_photo.jpg")
+    """
+    return _style_list( PREDEFINED_STYLE_GROUPS )
 
 
 def _sanitize_filename(filename: str) -> str:
@@ -82,8 +102,16 @@ def _sanitize_filename(filename: str) -> str:
 #============================== SERVER ROUTES ==============================#
 
 @routes.get("/zi_power/styles/last_version")
-async def get_last_version_styles(_):
-    return web.json_response( _get_last_version_styles() )
+async def get_last_version_styles(_) -> web.StreamResponse:
+    return web.json_response( _cached_last_version_styles() )
+
+
+@routes.get("/zi_power/styles/by_version")
+async def get_styles_by_version(request: web.Request) -> web.StreamResponse:
+    version = request.query.get("v") or request.query.get("version")
+    if not version or version not in STYLE_GROUPS_BY_VERSION:
+        return web.Response(status=400)
+    return web.json_response( _style_list( STYLE_GROUPS_BY_VERSION[version] ) )
 
 
 @routes.get("/zi_power/styles/samples")

@@ -11,7 +11,7 @@
  *_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 */
 import { app } from "../../../scripts/app.js";
-import { fetchStyleNamesByCategory } from "./common_server.js";
+import { fetchStyleNamesByCategory09 } from "./common_server.js";
 const ENABLED = true;
 /**
  * Object encapsulating the style category selection functionality.
@@ -39,13 +39,12 @@ function init(self, categoryWidget, styleWidget) {
     self.selectedByCategory = {};
 
     // performs an asynchronous request to the server to get styles by category
-    fetchStyleNamesByCategory( (stylesByCategory) => {
+    fetchStyleNamesByCategory09( (stylesByCategory) => {
         self.stylesByCategory = stylesByCategory;
-        console.log("##>> stylesByCategory: ",stylesByCategory);
+        // fill the style combo widget with all the styles from the current category
+        fillStyleWidget(self, self.categoryWidget.value);
     });
 
-    // fill the style combo widget with all the styles from the current category
-    fillStyleWidget(self, self.categoryWidget.value);
 
     // save the existing callback functionconst ENABLED = true;
     const originalCallback = self.categoryWidget.callback;
@@ -67,8 +66,6 @@ function init(self, categoryWidget, styleWidget) {
  *     which is either "none" or the first style available.
  */
 function fillStyleWidget(self, category) {
-
-    //console.log("##>> sbycat:", self.stylesByCategory );
 
     // if the category is not valid -> styles = ["none"]
     if( !self.stylesByCategory ||
