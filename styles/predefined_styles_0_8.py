@@ -332,7 +332,7 @@ _CustomStyles = """
 """
 
 
-PREDEFINED_STYLE_GROUPS_0_08 = [
+PREDEFINED_STYLE_GROUPS_0_8 = [
     StyleGroup.from_string( _PhotoStyles       , category="photo"       , version="0.8.0" ),
     StyleGroup.from_string( _IllustrationStyles, category="illustration", version="0.8.0" ),
     StyleGroup.from_string( _WildStyles        , category="wild"        , version="0.8.0" ),

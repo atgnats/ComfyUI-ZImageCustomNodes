@@ -15,10 +15,10 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     - https://docs.comfy.org/custom-nodes/v3_migration
 
 """
-from comfy_api.latest                  import io
-from ..lib.system                      import logger
-from ..lib.style_group                 import StyleGroup
-from ...styles.predefined_styles_0_08  import PREDEFINED_STYLE_GROUPS_0_08 as PREDEFINED_STYLE_GROUPS
+from comfy_api.latest                 import io
+from ..lib.system                     import logger
+from ..lib.style_group                import StyleGroup
+from ...styles.predefined_styles_0_8  import PREDEFINED_STYLE_GROUPS_0_8 as PREDEFINED_STYLE_GROUPS
 ILLUSTRATION_STYLES = next((style_group for style_group in PREDEFINED_STYLE_GROUPS if style_group.category == "illustration"))
 
 

@@ -1308,11 +1308,11 @@ _CustomStyles = """
 """
 
 
-PREDEFINED_STYLE_GROUPS_0_10beta : list[StyleGroup] = [
+PREDEFINED_STYLE_GROUPS_1_0 : list[StyleGroup] = [
     STYLE_GROUP_NONE,
-    StyleGroup.from_string( _PhotoStyles       , category="photo"       , version="0.10.0" ),
-    StyleGroup.from_string( _IllustrationStyles, category="illustration", version="0.10.0" ),
-    StyleGroup.from_string( _WildStyles        , category="wild"        , version="0.10.0" ),
-    StyleGroup.from_string( _CustomStyles      , category="custom"      , version="0.10.0" ),
+    StyleGroup.from_string( _PhotoStyles       , category="photo"       , version="1.0.0" ),
+    StyleGroup.from_string( _IllustrationStyles, category="illustration", version="1.0.0" ),
+    StyleGroup.from_string( _WildStyles        , category="wild"        , version="1.0.0" ),
+    StyleGroup.from_string( _CustomStyles      , category="custom"      , version="1.0.0" ),
 ]
 
