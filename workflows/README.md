@@ -1,3 +1,4 @@
+
 # Z-Image Power Nodes Example Workflows
 
  * `/_dev_`               : Folder containing draft or experimental workflows used during development.
@@ -5,28 +6,36 @@
  * `/safetensors_versions`: Folder containing versions of workflows that use .safetensors checkpoint files.
  * `z-image_turbo_main_workflow.json`: Main example workflow for using Z-Image Power Nodes in text-to-image generation.
 
+
+
 ## Requirements
 
-To use these workflows, you need to have "Z-Image Power Nodes" installed in ComfyUI.  
-It can be installed via the ComfyUI Manager or downloaded from its respective repository.
+To utilize any of these workflows, you need to have ComfyUI configured and the
+"Z-Image Power Nodes" installed. Additionally, ensure that the required checkpoints
+(in GGUF or Safetensors format) are placed in the appropriate directories within
+your ComfyUI setup.
 
-### Installation via ComfyUI Manager (Recommended)
+If you choose to use GGUF-format checkpoints, it is necessary to install the
+"ComfyUI-GGUF" nodes as well, since ComfyUI does not natively support GGUF files.
+You can find these nodes at: https://huggingface.co/city96/ComfyUI-GGUF
 
- - Open ComfyUI and click on the "Manager" button to launch the "ComfyUI Manager Menu".
- - Within the ComfyUI Manager, locate and click on the "Custom Nodes Manager" button.
- - In the search bar, type "Z-Image Power Nodes".
- - Select the option from the search results and click the "Install" button.
- - Restart ComfyUI to ensure the changes take effect.
+Below in this readme, you will find detailed instructions on how to install the
+necessary nodes and checkpoints.
 
-### Manual Installation
+Please note that while my work with "Z-Image Power Nodes" was developed and
+tested using the recommended checkpoints listed below, it may also work
+correctly with other "Z-Image Turbo" checkpoints or when applying LoRA.
+However, if custom modifications are made to the workflows or alternative
+checkpoint combinations are used, I cannot guarantee 100% functionality in all
+cases. It becomes your responsibility to determine the suitable configuration
+for your customized setups.
 
- For manual installation, follow the instructions provided in the GitHub repository of the project:
- - https://github.com/martin-rizzo/ComfyUI-ZImagePowerNodes
+The node pack includes an "Advanced" version of "Z-Sampler Turbo" that incorporates
+additional parameters which may help it function better in your custom workflows.
+
 
 
 ## GGUF Checkpoints
-<!-- ComfyUI does not natively support GGUF format, so you need to have installed: https://github.com/city96/ComfyUI-GGUF -->
-
 > [!NOTE]
 > <sub>
 GGUF checkpoints tend to run slightly slower in ComfyUI. However, if you are building
@@ -52,6 +61,7 @@ __Recommended Z-Image Turbo checkpoints in GGUF format:__
   Local Directory: `ComfyUI/models/vae/`
 
 
+
 ## Safetensors Checkpoints
 > [!NOTE]
 > <sub>
@@ -67,14 +77,15 @@ __Recommended Z-Image Turbo checkpoints in Safetensors format:__
   - "z_image_turbo_bf16.safetensors" [12.3 GB]
     [ Download ]( https://huggingface.co/Comfy-Org/z_image_turbo/blob/main/split_files/diffusion_models/z_image_turbo_bf16.safetensors )  
     Local Directory: `ComfyUI/models/diffusion_models/`
-  
+
   - "qwen_3_4b.safetensors" [8.04 GB]
     [ Download ]( https://huggingface.co/Comfy-Org/z_image_turbo/blob/main/split_files/text_encoders/qwen_3_4b.safetensors )  
     Local Directory: `ComfyUI/models/text_encoders/`
-  
+
   - "ae.safetensors" [335 MB]
     [ Download ]( https://huggingface.co/Comfy-Org/z_image_turbo/blob/main/split_files/vae/ae.safetensors )  
     Local Directory: `ComfyUI/models/vae/`
+
 
 
 ## Z-Image Power Nodes
@@ -95,8 +106,3 @@ __Manual Installation:__
  - https://github.com/martin-rizzo/ComfyUI-ZImagePowerNodes
 
 
-## License
-
-Copyright (c) 2026 Martin Rizzo  
-This project is licensed under the MIT license.  
-See the "LICENSE" file for details.
