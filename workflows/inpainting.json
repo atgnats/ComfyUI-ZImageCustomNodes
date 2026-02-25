@@ -1,8 +1,8 @@
 {
   "id": "f14c6566-993e-4413-bd11-9c7f2ca07fd1",
   "revision": 0,
-  "last_node_id": 72,
-  "last_link_id": 108,
+  "last_node_id": 73,
+  "last_link_id": 112,
   "nodes": [
     {
       "id": 35,
@@ -97,7 +97,7 @@
         {
           "name": "samples",
           "type": "LATENT",
-          "link": 71
+          "link": 112
         },
         {
           "name": "vae",
@@ -189,57 +189,6 @@
       "shape": 1
     },
     {
-      "id": 47,
-      "type": "ZSamplerTurbo2 //ZImagePowerNodes",
-      "pos": [
-        880,
-        150
-      ],
-      "size": [
-        320,
-        630
-      ],
-      "flags": {},
-      "order": 13,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "model",
-          "type": "MODEL",
-          "link": 68
-        },
-        {
-          "name": "positive",
-          "type": "CONDITIONING",
-          "link": 89
-        },
-        {
-          "name": "latent_input",
-          "type": "LATENT",
-          "link": 104
-        }
-      ],
-      "outputs": [
-        {
-          "name": "latent_output",
-          "type": "LATENT",
-          "links": [
-            71
-          ]
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "ZSamplerTurbo2 //ZImagePowerNodes"
-      },
-      "widgets_values": [
-        2,
-        "fixed",
-        9,
-        0.92,
-        "experimental"
-      ]
-    },
-    {
       "id": 71,
       "type": "Reroute",
       "pos": [
@@ -265,7 +214,7 @@
           "name": "",
           "type": "LATENT",
           "links": [
-            104
+            111
           ]
         }
       ],
@@ -493,7 +442,7 @@
           "name": "",
           "type": "MODEL",
           "links": [
-            68
+            109
           ]
         }
       ],
@@ -594,7 +543,7 @@
           "name": "CONDITIONING",
           "type": "CONDITIONING",
           "links": [
-            89
+            110
           ]
         },
         {
@@ -615,6 +564,59 @@
       "color": "#232",
       "bgcolor": "#353",
       "shape": 1
+    },
+    {
+      "id": 73,
+      "type": "ZSamplerTurbo //ZImagePowerNodes",
+      "pos": [
+        860,
+        150
+      ],
+      "size": [
+        310,
+        620
+      ],
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 109
+        },
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "link": 110
+        },
+        {
+          "name": "latent_input",
+          "type": "LATENT",
+          "link": 111
+        }
+      ],
+      "outputs": [
+        {
+          "name": "latent_output",
+          "type": "LATENT",
+          "links": [
+            112
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ZSamplerTurbo //ZImagePowerNodes"
+      },
+      "widgets_values": [
+        1,
+        "fixed",
+        9,
+        1,
+        null,
+        "100%",
+        false
+      ]
     }
   ],
   "links": [
@@ -667,30 +669,6 @@
       "CLIP"
     ],
     [
-      68,
-      39,
-      0,
-      47,
-      0,
-      "MODEL"
-    ],
-    [
-      71,
-      47,
-      0,
-      8,
-      0,
-      "LATENT"
-    ],
-    [
-      89,
-      43,
-      0,
-      47,
-      1,
-      "CONDITIONING"
-    ],
-    [
       91,
       54,
       0,
@@ -712,14 +690,6 @@
       0,
       71,
       0,
-      "LATENT"
-    ],
-    [
-      104,
-      71,
-      0,
-      47,
-      2,
       "LATENT"
     ],
     [
@@ -745,6 +715,38 @@
       20,
       0,
       "VAE"
+    ],
+    [
+      109,
+      39,
+      0,
+      73,
+      0,
+      "MODEL"
+    ],
+    [
+      110,
+      43,
+      0,
+      73,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      111,
+      71,
+      0,
+      73,
+      2,
+      "LATENT"
+    ],
+    [
+      112,
+      73,
+      0,
+      8,
+      0,
+      "LATENT"
     ]
   ],
   "groups": [
@@ -765,10 +767,10 @@
   "config": {},
   "extra": {
     "ds": {
-      "scale": 0.7513148009015781,
+      "scale": 0.6209213230591556,
       "offset": [
-        463.45862422937785,
-        124.97178192481454
+        507.1817379012525,
+        172.9096186435646
       ]
     },
     "frontendVersion": "1.37.11",
