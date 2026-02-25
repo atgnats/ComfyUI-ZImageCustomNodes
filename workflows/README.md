@@ -1,5 +1,5 @@
 
-# Z-Image Power Nodes Example Workflows
+# Z-Image Power Nodes: Example Workflows
 
  * `/safetensors_workflows`: Folder containing these same workflows but pre-configured for use with .safetensors checkpoints.
  * `advanced__develop_and_test_new_styles.json`: Advanced workflow for testing and refining new styles through multiple prompts.
@@ -8,7 +8,7 @@
  * `inject_style_into_string.json`: Shows how to dynamically insert style text into a prompt string.
  * `inpainting.json`: Demonstrates inpainting techniques utilizing the "Z-Sampler Turbo" node.
  * `my_top_10_styles.json`: Example of building a custom list of favorite styles (easily expandable beyond 10).
- * `z-image_turbo_main_workflow.json`: Main reference workflow for text-to-image generation using the "Z-Image Power Nodes".
+ * `z-image_turbo_text2image_workflow.json`: Main reference workflow for text-to-image generation using the "Z-Image Power Nodes".
 
 
 ## Requirements
@@ -93,7 +93,7 @@ __Recommended Z-Image Turbo checkpoints in Safetensors format:__
 
 ## Z-Image Power Nodes
 
-The Z-Image Power Nodes can be installed via the ComfyUI Manager or downloaded from its respective repository.
+Z-Image Power Nodes can be installed via the ComfyUI Manager or downloaded from its respective repository.
 
 __Installation via ComfyUI Manager (Recommended):__
 
