@@ -1,8 +1,8 @@
 {
   "id": "f14c6566-993e-4413-bd11-9c7f2ca07fd1",
   "revision": 0,
-  "last_node_id": 55,
-  "last_link_id": 88,
+  "last_node_id": 59,
+  "last_link_id": 91,
   "nodes": [
     {
       "id": 38,
@@ -16,13 +16,13 @@
         26
       ],
       "flags": {},
-      "order": 7,
+      "order": 8,
       "mode": 0,
       "inputs": [
         {
           "name": "",
           "type": "*",
-          "link": 87
+          "link": 90
         }
       ],
       "outputs": [
@@ -51,13 +51,13 @@
         26
       ],
       "flags": {},
-      "order": 8,
+      "order": 9,
       "mode": 0,
       "inputs": [
         {
           "name": "",
           "type": "*",
-          "link": 88
+          "link": 91
         }
       ],
       "outputs": [
@@ -294,80 +294,6 @@
       ]
     },
     {
-      "id": 54,
-      "type": "CLIPLoaderGGUF",
-      "pos": [
-        -1080,
-        80
-      ],
-      "size": [
-        380,
-        100
-      ],
-      "flags": {},
-      "order": 3,
-      "mode": 0,
-      "inputs": [],
-      "outputs": [
-        {
-          "name": "CLIP",
-          "type": "CLIP",
-          "links": [
-            87
-          ]
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "CLIPLoaderGGUF",
-        "cnr_id": "comfyui-gguf",
-        "aux_id": "city96/ComfyUI-GGUF",
-        "ver": "1.1.8"
-      },
-      "widgets_values": [
-        "Qwen3-4B.i1-Q5_K_S.gguf",
-        "lumina2"
-      ],
-      "color": "#322",
-      "bgcolor": "#533",
-      "shape": 1
-    },
-    {
-      "id": 55,
-      "type": "VAELoader",
-      "pos": [
-        -1080,
-        230
-      ],
-      "size": [
-        380,
-        90
-      ],
-      "flags": {},
-      "order": 4,
-      "mode": 0,
-      "inputs": [],
-      "outputs": [
-        {
-          "name": "VAE",
-          "type": "VAE",
-          "links": [
-            88
-          ]
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "VAELoader",
-        "cnr_id": "comfy-core",
-        "ver": "0.3.75"
-      },
-      "widgets_values": [
-        "ae.safetensors"
-      ],
-      "color": "#322",
-      "bgcolor": "#533",
-      "shape": 1
-    },
-    {
       "id": 47,
       "type": "Reroute",
       "pos": [
@@ -379,13 +305,13 @@
         26
       ],
       "flags": {},
-      "order": 9,
+      "order": 7,
       "mode": 0,
       "inputs": [
         {
           "name": "",
           "type": "*",
-          "link": 86
+          "link": 89
         }
       ],
       "outputs": [
@@ -401,67 +327,6 @@
         "showOutputText": false,
         "horizontal": false
       }
-    },
-    {
-      "id": 53,
-      "type": "UnetLoaderGGUF",
-      "pos": [
-        -1080,
-        -60
-      ],
-      "size": [
-        380,
-        90
-      ],
-      "flags": {},
-      "order": 5,
-      "mode": 0,
-      "inputs": [],
-      "outputs": [
-        {
-          "name": "MODEL",
-          "type": "MODEL",
-          "links": [
-            86
-          ]
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "UnetLoaderGGUF",
-        "cnr_id": "comfyui-gguf",
-        "aux_id": "city96/ComfyUI-GGUF",
-        "ver": "1.1.8"
-      },
-      "widgets_values": [
-        "z_image_turbo-Q5_K_S.gguf"
-      ],
-      "color": "#322",
-      "bgcolor": "#533",
-      "shape": 1
-    },
-    {
-      "id": 49,
-      "type": "Note",
-      "pos": [
-        -1970,
-        -100
-      ],
-      "size": [
-        870,
-        560
-      ],
-      "flags": {},
-      "order": 6,
-      "mode": 0,
-      "inputs": [],
-      "outputs": [],
-      "title": "REQUIREMENTS",
-      "properties": {},
-      "widgets_values": [
-        "Z-Image Power Nodes\n\n## Workflow Prerequisites ##\n\nThis workflow requires the following custom nodes, which can be obtained via ComfyUI-Manager:\n\n  * Z-Image Power Nodes: https://github.com/martin-rizzo/ComfyUI-ZImagePowerNodes\n  * ComfyUI-GGUF       : https://github.com/city96/ComfyUI-GGUF\n\n Additionally, ensure you have the following 3 models downloaded and placed in their respective\n directories within your ComfyUI installation:\n\n  z_image_turbo-Q5_K_S.gguf\n    * Download: https://huggingface.co/jayn7/Z-Image-Turbo-GGUF/blob/main/z_image_turbo-Q5_K_S.gguf\n    * Local Directory: `ComfyUI/models/diffusion_models/`\n\n  Qwen3-4B.i1-Q5_K_S.gguf\n    * Download: https://huggingface.co/mradermacher/Qwen3-4B-i1-GGUF/blob/main/Qwen3-4B.i1-Q5_K_S.gguf\n    * Local Directory: `ComfyUI/models/text_encoders/`\n\n  ae.safetensors\n    * Download: https://huggingface.co/Comfy-Org/z_image_turbo/blob/main/split_files/vae/ae.safetensors\n    * Local Directory: `Comfyui/models/vae/`\n\n## More Info ##\n\n- https://github.com/martin-rizzo/ComfyUI-ZImagePowerNodes\n- https://civitai.com/models/2322533/z-image-power-nodes\n\nCreated by Martin Rizzo\n  GitHub : https://github.com/martin-rizzo\n  CivitAI: https://civitai.com/user/Photographer\n  Reddit : https://www.reddit.com/user/FotografoVirtual\n"
-      ],
-      "color": "#432",
-      "bgcolor": "#653"
     },
     {
       "id": 45,
@@ -516,6 +381,141 @@
       "color": "#232",
       "bgcolor": "#353",
       "shape": 1
+    },
+    {
+      "id": 59,
+      "type": "UNETLoader",
+      "pos": [
+        -1080,
+        -60
+      ],
+      "size": [
+        380,
+        100
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            89
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "UNETLoader",
+        "cnr_id": "comfy-core",
+        "ver": "0.3.75"
+      },
+      "widgets_values": [
+        "z_image_turbo_bf16.safetensors",
+        "default"
+      ],
+      "color": "#322",
+      "bgcolor": "#533",
+      "shape": 1
+    },
+    {
+      "id": 57,
+      "type": "CLIPLoader",
+      "pos": [
+        -1080,
+        80
+      ],
+      "size": [
+        380,
+        110
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "CLIP",
+          "type": "CLIP",
+          "links": [
+            90
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CLIPLoader",
+        "cnr_id": "comfy-core",
+        "ver": "0.3.75"
+      },
+      "widgets_values": [
+        "qwen_3_4b.safetensors",
+        "lumina2",
+        "default"
+      ],
+      "color": "#322",
+      "bgcolor": "#533",
+      "shape": 1
+    },
+    {
+      "id": 58,
+      "type": "VAELoader",
+      "pos": [
+        -1080,
+        230
+      ],
+      "size": [
+        380,
+        90
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "VAE",
+          "type": "VAE",
+          "links": [
+            91
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VAELoader",
+        "cnr_id": "comfy-core",
+        "ver": "0.3.75"
+      },
+      "widgets_values": [
+        "ae.safetensors"
+      ],
+      "color": "#322",
+      "bgcolor": "#533",
+      "shape": 1
+    },
+    {
+      "id": 56,
+      "type": "Note",
+      "pos": [
+        -1970,
+        -110
+      ],
+      "size": [
+        870,
+        550
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "REQUIREMENTS",
+      "properties": {},
+      "widgets_values": [
+        "Z-Image Power Nodes\n\n## Workflow Prerequisites ##\n\nThis workflow requires the following custom nodes, which can be obtained via ComfyUI-Manager:\n\n  * Z-Image Power Nodes: https://github.com/martin-rizzo/ComfyUI-ZImagePowerNodes\n\n Additionally, ensure you have the following 3 models downloaded and placed in their respective\n directories within your ComfyUI installation:\n\n  z_image_turbo_bf16.safetensors\n    * Download: https://huggingface.co/Comfy-Org/z_image_turbo/blob/main/split_files/diffusion_models/z_image_turbo_bf16.safetensors\n    * Local Directory: `ComfyUI/models/diffusion_models/`\n\n  qwen_3_4b.safetensors\n    * Download: https://huggingface.co/Comfy-Org/z_image_turbo/blob/main/split_files/text_encoders/qwen_3_4b.safetensors\n    * Local Directory: `ComfyUI/models/text_encoders/`\n\n  ae.safetensors\n    * Download: https://huggingface.co/Comfy-Org/z_image_turbo/blob/main/split_files/vae/ae.safetensors\n    * Local Directory: `Comfyui/models/vae/`\n\n## More Info ##\n\n- https://github.com/martin-rizzo/ComfyUI-ZImagePowerNodes\n- https://civitai.com/models/2322533/z-image-power-nodes\n\nCreated by Martin Rizzo\n  GitHub : https://github.com/martin-rizzo\n  CivitAI: https://civitai.com/user/Photographer\n  Reddit : https://www.reddit.com/user/FotografoVirtual\n"
+      ],
+      "color": "#432",
+      "bgcolor": "#653"
     }
   ],
   "links": [
@@ -584,24 +584,24 @@
       "LATENT"
     ],
     [
-      86,
-      53,
+      89,
+      59,
       0,
       47,
       0,
       "MODEL"
     ],
     [
-      87,
-      54,
+      90,
+      57,
       0,
       38,
       0,
       "CLIP"
     ],
     [
-      88,
-      55,
+      91,
+      58,
       0,
       40,
       0,
@@ -621,11 +621,11 @@
   ],
   "groups": [
     {
-      "id": 3,
-      "title": "GGUF MODELS",
+      "id": 4,
+      "title": "SAFETENSORS MODELS",
       "bounding": [
         -1090,
-        -120,
+        -140,
         400,
         580
       ],
@@ -639,8 +639,8 @@
     "ds": {
       "scale": 0.751314800901578,
       "offset": [
-        514.68201641793,
-        201.18975192959448
+        526.2294812616785,
+        218.19639646084445
       ]
     },
     "frontendVersion": "1.37.11",

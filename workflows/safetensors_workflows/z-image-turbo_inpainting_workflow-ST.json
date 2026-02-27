@@ -1,14 +1,14 @@
 {
   "id": "f14c6566-993e-4413-bd11-9c7f2ca07fd1",
   "revision": 0,
-  "last_node_id": 48,
-  "last_link_id": 65,
+  "last_node_id": 106,
+  "last_link_id": 164,
   "nodes": [
     {
       "id": 8,
       "type": "VAEDecode",
       "pos": [
-        1160,
+        1220,
         150
       ],
       "size": [
@@ -16,13 +16,13 @@
         50
       ],
       "flags": {},
-      "order": 14,
+      "order": 15,
       "mode": 0,
       "inputs": [
         {
           "name": "samples",
           "type": "LATENT",
-          "link": 22
+          "link": 112
         },
         {
           "name": "vae",
@@ -48,45 +48,10 @@
       "widgets_values": []
     },
     {
-      "id": 20,
-      "type": "Reroute",
-      "pos": [
-        970,
-        790
-      ],
-      "size": [
-        75,
-        26
-      ],
-      "flags": {},
-      "order": 13,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "",
-          "type": "*",
-          "link": 24
-        }
-      ],
-      "outputs": [
-        {
-          "name": "",
-          "type": "VAE",
-          "links": [
-            25
-          ]
-        }
-      ],
-      "properties": {
-        "showOutputText": false,
-        "horizontal": false
-      }
-    },
-    {
       "id": 31,
       "type": "SaveImage //ZImagePowerNodes",
       "pos": [
-        1360,
+        1400,
         150
       ],
       "size": [
@@ -94,7 +59,7 @@
         760
       ],
       "flags": {},
-      "order": 15,
+      "order": 16,
       "mode": 0,
       "inputs": [
         {
@@ -113,11 +78,11 @@
       ]
     },
     {
-      "id": 39,
+      "id": 38,
       "type": "Reroute",
       "pos": [
-        70,
-        150
+        -690,
+        210
       ],
       "size": [
         75,
@@ -130,77 +95,7 @@
         {
           "name": "",
           "type": "*",
-          "link": 63
-        }
-      ],
-      "outputs": [
-        {
-          "name": "",
-          "type": "MODEL",
-          "links": [
-            57
-          ]
-        }
-      ],
-      "properties": {
-        "showOutputText": false,
-        "horizontal": false
-      }
-    },
-    {
-      "id": 19,
-      "type": "Reroute",
-      "pos": [
-        200,
-        790
-      ],
-      "size": [
-        75,
-        26
-      ],
-      "flags": {},
-      "order": 11,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "",
-          "type": "*",
-          "link": 59
-        }
-      ],
-      "outputs": [
-        {
-          "name": "",
-          "type": "VAE",
-          "links": [
-            24
-          ]
-        }
-      ],
-      "properties": {
-        "showOutputText": false,
-        "horizontal": false
-      }
-    },
-    {
-      "id": 38,
-      "type": "Reroute",
-      "pos": [
-        70,
-        210
-      ],
-      "size": [
-        75,
-        26
-      ],
-      "flags": {},
-      "order": 8,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "",
-          "type": "*",
-          "link": 64
+          "link": 163
         }
       ],
       "outputs": [
@@ -208,7 +103,42 @@
           "name": "",
           "type": "CLIP",
           "links": [
-            60
+            62
+          ]
+        }
+      ],
+      "properties": {
+        "showOutputText": false,
+        "horizontal": false
+      }
+    },
+    {
+      "id": 39,
+      "type": "Reroute",
+      "pos": [
+        -690,
+        150
+      ],
+      "size": [
+        75,
+        26
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "",
+          "type": "*",
+          "link": 162
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "MODEL",
+          "links": [
+            109
           ]
         }
       ],
@@ -221,21 +151,21 @@
       "id": 40,
       "type": "Reroute",
       "pos": [
-        70,
-        250
+        -690,
+        440
       ],
       "size": [
         75,
         26
       ],
       "flags": {},
-      "order": 9,
+      "order": 8,
       "mode": 0,
       "inputs": [
         {
           "name": "",
           "type": "*",
-          "link": 65
+          "link": 164
         }
       ],
       "outputs": [
@@ -243,7 +173,7 @@
           "name": "",
           "type": "VAE",
           "links": [
-            59
+            105
           ]
         }
       ],
@@ -253,171 +183,136 @@
       }
     },
     {
-      "id": 18,
-      "type": "ZSamplerTurbo //ZImagePowerNodes",
+      "id": 93,
+      "type": "Reroute",
       "pos": [
-        870,
-        150
+        730,
+        820
       ],
       "size": [
-        250,
-        480
+        75,
+        26
       ],
       "flags": {},
-      "order": 12,
+      "order": 13,
       "mode": 0,
       "inputs": [
         {
-          "name": "model",
-          "type": "MODEL",
-          "link": 57
-        },
-        {
-          "name": "positive",
-          "type": "CONDITIONING",
-          "link": 61
-        },
-        {
-          "name": "latent_input",
-          "type": "LATENT",
-          "link": 48
+          "name": "",
+          "type": "*",
+          "link": 154
         }
       ],
       "outputs": [
         {
-          "name": "latent_output",
+          "name": "",
           "type": "LATENT",
           "links": [
-            22
+            155
           ]
         }
       ],
       "properties": {
-        "Node name for S&R": "ZSamplerTurbo //ZImagePowerNodes",
-        "aux_id": "martin-rizzo/ComfyUI-ZImagePowerNodes",
-        "ver": "7cb3b03f95eeae260ebbc2facdf6ba6c1e16e639"
-      },
-      "widgets_values": [
-        1,
-        "fixed",
-        9,
-        1
-      ]
+        "showOutputText": false,
+        "horizontal": false
+      }
     },
     {
-      "id": 44,
-      "type": "Note",
+      "id": 20,
+      "type": "Reroute",
       "pos": [
-        -50,
-        -160
+        1050,
+        950
       ],
       "size": [
-        420,
-        250
+        75,
+        26
       ],
       "flags": {},
-      "order": 0,
+      "order": 11,
       "mode": 0,
-      "inputs": [],
-      "outputs": [],
-      "properties": {},
-      "widgets_values": [
-        "This workflow demonstrates how to define a custom style by connecting through the \"customization\" input in the \"Style & Prompt Encoder\" node.\n\nA multi-line string must be defined using the following format:\nEach line starting with \">>>\" (three greater-than signs) defines the name of the style. From there, all subsequent lines until the next \">>>\" define the content of that style. Within this content, the tag \"{$@}\" will be replaced by the prompt.\n\nWhile the example shows all styles being defined as \"Custom <N>\", this method can be used to redefine any of the available styles in the style selector."
+      "inputs": [
+        {
+          "name": "",
+          "type": "*",
+          "link": 108
+        }
       ],
-      "color": "#223",
-      "bgcolor": "#335",
-      "shape": 1
-    },
-    {
-      "id": 43,
-      "type": "PrimitiveStringMultiline",
-      "pos": [
-        -450,
-        320
-      ],
-      "size": [
-        590,
-        560
-      ],
-      "flags": {},
-      "order": 1,
-      "mode": 0,
-      "inputs": [],
       "outputs": [
         {
-          "name": "STRING",
-          "type": "STRING",
+          "name": "",
+          "type": "VAE",
           "links": [
-            62
+            25
           ]
         }
       ],
       "properties": {
-        "Node name for S&R": "PrimitiveStringMultiline"
-      },
-      "widgets_values": [
-        ">>>CUSTOM 1\nYOUR CONTEXT:\nYou are an illustrator of dark and disturbing themes.\nYour illustration includes {$spicy-content-with} stippling textures, dramatic raking side lighting, and a dread-filled atmosphere that is oppressive and claustrophobic. High contrast emphasizes form and shadow, employing cinematic chiaroscuro for depth.\nYOUR DRAWING:\n{$@}\n\n\n>>>Custom 2\nYOUR CONTEXT:\nYou are a sci-fi pulp magazine illustrator from the 1940s.\nYour drawing is a lush, painted-style comic cover including {$spicy-content-with} dramatic, heroic lighting and a vivid \"Technicolor\" palette of saturated oranges, deep teals, and bright yellows. It features soft airbrushed textures, muscular anatomy, and a grainy film-stock finish that evokes a sense of retro-futuristic adventure.\nYOUR DRAWING:\n{$@}\n\n\n>>>custom 3\nYOUR CONTEXT:\nAn eye-level, realistic photo of a glass-encased advertising poster (mupi) located on a clean city sidewalk. There are subtle reflections of nearby buildings and trees on the glass surface. The lighting is natural overcast daylight.\nWHAT'S BEHIND THE REFLECTIVE GLASS:\nA faded and sun-faded, low quality printed advertisement, showing: {$@}"
-      ]
+        "showOutputText": false,
+        "horizontal": false
+      }
     },
     {
-      "id": 32,
-      "type": "EmptyZImageLatentImage //ZImagePowerNodes",
+      "id": 72,
+      "type": "Reroute",
       "pos": [
-        530,
-        20
+        -310,
+        950
       ],
       "size": [
-        316.9362396240234,
-        130
-      ],
-      "flags": {},
-      "order": 2,
-      "mode": 0,
-      "inputs": [],
-      "outputs": [
-        {
-          "name": "LATENT",
-          "type": "LATENT",
-          "links": [
-            48
-          ]
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "EmptyZImageLatentImage //ZImagePowerNodes"
-      },
-      "widgets_values": [
-        false,
-        "3:2  (photo)",
-        "medium (recommended)",
-        1
-      ]
-    },
-    {
-      "id": 42,
-      "type": "StylePromptEncoder //ZImagePowerNodes",
-      "pos": [
-        200,
-        210
-      ],
-      "size": [
-        660,
-        570
+        75,
+        26
       ],
       "flags": {},
       "order": 10,
       "mode": 0,
       "inputs": [
         {
+          "name": "",
+          "type": "*",
+          "link": 105
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "VAE",
+          "links": [
+            108,
+            148
+          ]
+        }
+      ],
+      "properties": {
+        "showOutputText": false,
+        "horizontal": false
+      }
+    },
+    {
+      "id": 43,
+      "type": "StylePromptEncoder2 //ZImagePowerNodes",
+      "pos": [
+        160,
+        200
+      ],
+      "size": [
+        670,
+        570
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
           "name": "clip",
           "type": "CLIP",
-          "link": 60
+          "link": 62
         },
         {
           "name": "customization",
           "shape": 7,
           "type": "STRING",
-          "link": 62
+          "link": null
         }
       ],
       "outputs": [
@@ -425,7 +320,7 @@
           "name": "CONDITIONING",
           "type": "CONDITIONING",
           "links": [
-            61
+            110
           ]
         },
         {
@@ -435,55 +330,220 @@
         }
       ],
       "properties": {
-        "Node name for S&R": "StylePromptEncoder //ZImagePowerNodes"
+        "Node name for S&R": "StylePromptEncoder2 //ZImagePowerNodes"
       },
       "widgets_values": [
-        "custom",
-        "\"Custom 3\"",
-        "A woman with short, spiky blonde hair is depicted from the chest up, aiming a large, dark gray firearm. Her hair is tousled and appears to be catching the light. She has blue eyes and shadow on her cheeks. She is wearing a white tank top with one strap visibly off her right shoulder. The firearm she holds is dark gray and appears to be a heavy weapon. A dark ancient castle is visible in the background on the right side. Her attire includes dark, torn shorts and ripped, dark stockings or tights on her legs."
+        "none",
+        null,
+        null,
+        ""
       ],
       "color": "#232",
       "bgcolor": "#353",
       "shape": 1
     },
     {
-      "id": 48,
-      "type": "Note",
+      "id": 92,
+      "type": "VAEEncodeSoftInpainting //ZImagePowerNodes",
       "pos": [
-        -1810,
-        -110
+        160,
+        820
       ],
       "size": [
-        870,
-        550
+        360,
+        122
       ],
       "flags": {},
-      "order": 3,
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "pixels",
+          "type": "IMAGE",
+          "link": 147
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 148
+        },
+        {
+          "name": "mask",
+          "type": "MASK",
+          "link": 153
+        }
+      ],
+      "outputs": [
+        {
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            154
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VAEEncodeSoftInpainting //ZImagePowerNodes"
+      },
+      "widgets_values": [
+        "medium (recommended)",
+        60
+      ]
+    },
+    {
+      "id": 54,
+      "type": "LoadImage",
+      "pos": [
+        -340,
+        400
+      ],
+      "size": [
+        440,
+        530
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            147
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": [
+            153
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage",
+        "image": "clipspace/clipspace-painted-masked-1772063845342.png [input]"
+      },
+      "widgets_values": [
+        "example.png",
+        "image"
+      ]
+    },
+    {
+      "id": 73,
+      "type": "ZSamplerTurbo //ZImagePowerNodes",
+      "pos": [
+        860,
+        150
+      ],
+      "size": [
+        310,
+        620
+      ],
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 109
+        },
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "link": 110
+        },
+        {
+          "name": "latent_input",
+          "type": "LATENT",
+          "link": 155
+        }
+      ],
+      "outputs": [
+        {
+          "name": "latent_output",
+          "type": "LATENT",
+          "links": [
+            112
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ZSamplerTurbo //ZImagePowerNodes"
+      },
+      "widgets_values": [
+        1,
+        "fixed",
+        9,
+        0.85,
+        null,
+        "100%",
+        false
+      ]
+    },
+    {
+      "id": 95,
+      "type": "Note",
+      "pos": [
+        -590,
+        -160
+      ],
+      "size": [
+        720,
+        500
+      ],
+      "flags": {},
+      "order": 1,
       "mode": 0,
       "inputs": [],
       "outputs": [],
       "title": "README",
       "properties": {},
       "widgets_values": [
-        "Z-Image Power Nodes\n\n## Workflow Prerequisites ##\n\nThis workflow requires the following custom nodes, which can be obtained via ComfyUI-Manager:\n\n  * Z-Image Power Nodes: https://github.com/martin-rizzo/ComfyUI-ZImagePowerNodes\n\n Additionally, ensure you have the following 3 models downloaded and placed in their respective\n directories within your ComfyUI installation:\n\n  z_image_turbo_bf16.safetensors\n    * Download: https://huggingface.co/Comfy-Org/z_image_turbo/blob/main/split_files/diffusion_models/z_image_turbo_bf16.safetensors\n    * Local Directory: `ComfyUI/models/diffusion_models/`\n\n  qwen_3_4b.safetensors\n    * Download: https://huggingface.co/Comfy-Org/z_image_turbo/blob/main/split_files/text_encoders/qwen_3_4b.safetensors\n    * Local Directory: `ComfyUI/models/text_encoders/`\n\n  ae.safetensors\n    * Download: https://huggingface.co/Comfy-Org/z_image_turbo/blob/main/split_files/vae/ae.safetensors\n    * Local Directory: `Comfyui/models/vae/`\n\n## More Info ##\n\n- https://github.com/martin-rizzo/ComfyUI-ZImagePowerNodes\n- https://civitai.com/models/2322533/z-image-power-nodes\n\nCreated by Martin Rizzo\n  GitHub : https://github.com/martin-rizzo\n  CivitAI: https://civitai.com/user/Photographer\n  Reddit : https://www.reddit.com/user/FotografoVirtual\n"
+        "\nThis workflow serves as a reference for performing inpainting using Z-Image Turbo and the power nodes.\n\nInpainting Process:\n  1. Load the image into the \"Load Image\" node.\n  2. Right-click inside the node -> \"Open in MaskEditor\"\n  3. Edit the mask - it can have sharp edges since the encoder will apply blur.\n  4. Within the mask editor, press \"Save\" to set the mask.\n  5. Enter a prompt describing how you want the final image to look.\n  6. Run the workflow and the masked area will be modified.\n\nKey Points:\n\n  * In my tests, not using styles works better (style = none)\n\n  * The inpainting process may perform better with \"denoise = 0.85\" in Z-Sampler,\n    though this was a basic adjustment by me, other denoise values might work even better,\n    it's worth trying.\n\n  * VAE Encode settings:\n\n     - \"output_size = medium\" resizes the image to an optimal size for z-image processing.\n       Inpainting should work at any resolution, so there's also an option \"same_as_input\"\n       which maintains the original image size.\n\n     - \"mask_blur_pixels\" specifies the width in pixels of the blur effect applied to the mask.\n       It helps blend the original image smoothly with the model-generated part. Since this\n       value is in pixels, it depends greatly on your specific image. (smaller images may\n       require lower values while very large images might need higher ones)."
       ],
-      "color": "#223",
-      "bgcolor": "#335",
-      "shape": 1
+      "color": "#432",
+      "bgcolor": "#653"
     },
     {
-      "id": 45,
+      "id": 103,
+      "type": "Note",
+      "pos": [
+        -1990,
+        100
+      ],
+      "size": [
+        870,
+        550
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "REQUIREMENTS",
+      "properties": {},
+      "widgets_values": [
+        "Z-Image Power Nodes\n\n## Workflow Prerequisites ##\n\nThis workflow requires the following custom nodes, which can be obtained via ComfyUI-Manager:\n\n  * Z-Image Power Nodes: https://github.com/martin-rizzo/ComfyUI-ZImagePowerNodes\n\n Additionally, ensure you have the following 3 models downloaded and placed in their respective\n directories within your ComfyUI installation:\n\n  z_image_turbo_bf16.safetensors\n    * Download: https://huggingface.co/Comfy-Org/z_image_turbo/blob/main/split_files/diffusion_models/z_image_turbo_bf16.safetensors\n    * Local Directory: `ComfyUI/models/diffusion_models/`\n\n  qwen_3_4b.safetensors\n    * Download: https://huggingface.co/Comfy-Org/z_image_turbo/blob/main/split_files/text_encoders/qwen_3_4b.safetensors\n    * Local Directory: `ComfyUI/models/text_encoders/`\n\n  ae.safetensors\n    * Download: https://huggingface.co/Comfy-Org/z_image_turbo/blob/main/split_files/vae/ae.safetensors\n    * Local Directory: `Comfyui/models/vae/`\n\n## More Info ##\n\n- https://github.com/martin-rizzo/ComfyUI-ZImagePowerNodes\n- https://civitai.com/models/2322533/z-image-power-nodes\n\nCreated by Martin Rizzo\n  GitHub : https://github.com/martin-rizzo\n  CivitAI: https://civitai.com/user/Photographer\n  Reddit : https://www.reddit.com/user/FotografoVirtual\n"
+      ],
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 106,
       "type": "UNETLoader",
       "pos": [
-        -920,
-        -70
+        -1100,
+        150
       ],
       "size": [
         380,
         100
       ],
       "flags": {},
-      "order": 4,
+      "order": 3,
       "mode": 0,
       "inputs": [],
       "outputs": [
@@ -491,7 +551,7 @@
           "name": "MODEL",
           "type": "MODEL",
           "links": [
-            63
+            162
           ]
         }
       ],
@@ -509,18 +569,18 @@
       "shape": 1
     },
     {
-      "id": 46,
+      "id": 104,
       "type": "CLIPLoader",
       "pos": [
-        -920,
-        70
+        -1100,
+        290
       ],
       "size": [
         380,
         110
       ],
       "flags": {},
-      "order": 5,
+      "order": 4,
       "mode": 0,
       "inputs": [],
       "outputs": [
@@ -528,7 +588,7 @@
           "name": "CLIP",
           "type": "CLIP",
           "links": [
-            64
+            163
           ]
         }
       ],
@@ -547,18 +607,18 @@
       "shape": 1
     },
     {
-      "id": 47,
+      "id": 105,
       "type": "VAELoader",
       "pos": [
-        -920,
-        220
+        -1100,
+        440
       ],
       "size": [
         380,
         90
       ],
       "flags": {},
-      "order": 6,
+      "order": 5,
       "mode": 0,
       "inputs": [],
       "outputs": [
@@ -566,7 +626,7 @@
           "name": "VAE",
           "type": "VAE",
           "links": [
-            65
+            164
           ]
         }
       ],
@@ -585,22 +645,6 @@
   ],
   "links": [
     [
-      22,
-      18,
-      0,
-      8,
-      0,
-      "LATENT"
-    ],
-    [
-      24,
-      19,
-      0,
-      20,
-      0,
-      "VAE"
-    ],
-    [
       25,
       20,
       0,
@@ -617,72 +661,112 @@
       "IMAGE"
     ],
     [
-      48,
-      32,
+      62,
+      38,
       0,
-      18,
-      2,
-      "LATENT"
+      43,
+      0,
+      "CLIP"
     ],
     [
-      57,
-      39,
-      0,
-      18,
-      0,
-      "MODEL"
-    ],
-    [
-      59,
+      105,
       40,
       0,
-      19,
+      72,
       0,
       "VAE"
     ],
     [
-      60,
-      38,
+      108,
+      72,
       0,
-      42,
+      20,
       0,
-      "CLIP"
+      "VAE"
     ],
     [
-      61,
-      42,
+      109,
+      39,
       0,
-      18,
+      73,
+      0,
+      "MODEL"
+    ],
+    [
+      110,
+      43,
+      0,
+      73,
       1,
       "CONDITIONING"
     ],
     [
-      62,
-      43,
+      112,
+      73,
       0,
-      42,
-      1,
-      "STRING"
+      8,
+      0,
+      "LATENT"
     ],
     [
-      63,
-      45,
+      147,
+      54,
+      0,
+      92,
+      0,
+      "IMAGE"
+    ],
+    [
+      148,
+      72,
+      0,
+      92,
+      1,
+      "VAE"
+    ],
+    [
+      153,
+      54,
+      1,
+      92,
+      2,
+      "MASK"
+    ],
+    [
+      154,
+      92,
+      0,
+      93,
+      0,
+      "LATENT"
+    ],
+    [
+      155,
+      93,
+      0,
+      73,
+      2,
+      "LATENT"
+    ],
+    [
+      162,
+      106,
       0,
       39,
       0,
       "MODEL"
     ],
     [
-      64,
-      46,
+      163,
+      104,
       0,
       38,
       0,
       "CLIP"
     ],
     [
-      65,
-      47,
+      164,
+      105,
       0,
       40,
       0,
@@ -691,15 +775,15 @@
   ],
   "groups": [
     {
-      "id": 3,
+      "id": 4,
       "title": "SAFETENSORS MODELS",
       "bounding": [
-        -930,
-        -140,
+        -1110,
+        70,
         400,
         580
       ],
-      "color": "#A88",
+      "color": "#b58b2a",
       "font_size": 24,
       "flags": {}
     }
@@ -707,13 +791,13 @@
   "config": {},
   "extra": {
     "ds": {
-      "scale": 0.75,
+      "scale": 0.7513148009015783,
       "offset": [
-        680.6472277097644,
-        293.70274373607293
+        751.4203606714487,
+        270.87825363826215
       ]
     },
-    "frontendVersion": "1.35.9",
+    "frontendVersion": "1.37.11",
     "workflowRendererVersion": "LG"
   },
   "version": 0.4

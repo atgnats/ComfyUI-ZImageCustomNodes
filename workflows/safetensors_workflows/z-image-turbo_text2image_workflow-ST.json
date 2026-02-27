@@ -1,19 +1,19 @@
 {
   "id": "f14c6566-993e-4413-bd11-9c7f2ca07fd1",
   "revision": 0,
-  "last_node_id": 46,
-  "last_link_id": 64,
+  "last_node_id": 65,
+  "last_link_id": 84,
   "nodes": [
     {
       "id": 8,
       "type": "VAEDecode",
       "pos": [
-        1160,
-        150
+        1426.5001954197278,
+        155.66666029751312
       ],
       "size": [
-        160,
-        50
+        187.5,
+        46
       ],
       "flags": {},
       "order": 12,
@@ -22,7 +22,7 @@
         {
           "name": "samples",
           "type": "LATENT",
-          "link": 22
+          "link": 75
         },
         {
           "name": "vae",
@@ -48,63 +48,76 @@
       "widgets_values": []
     },
     {
-      "id": 18,
-      "type": "ZSamplerTurbo //ZImagePowerNodes",
+      "id": 31,
+      "type": "SaveImage //ZImagePowerNodes",
       "pos": [
-        870,
-        150
+        1629.0000113262572,
+        159.27775418691726
       ],
       "size": [
-        250,
-        480
+        540,
+        870.390625
       ],
       "flags": {},
-      "order": 10,
+      "order": 13,
       "mode": 0,
       "inputs": [
         {
-          "name": "model",
-          "type": "MODEL",
-          "link": 57
-        },
+          "name": "images",
+          "type": "IMAGE",
+          "link": 47
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "SaveImage //ZImagePowerNodes"
+      },
+      "widgets_values": [
+        "ZImage/%date:yyyy_MM_dd%/ZI",
+        true
+      ]
+    },
+    {
+      "id": 39,
+      "type": "Reroute",
+      "pos": [
+        110,
+        160
+      ],
+      "size": [
+        75,
+        26
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
         {
-          "name": "positive",
-          "type": "CONDITIONING",
-          "link": 61
-        },
-        {
-          "name": "latent_input",
-          "type": "LATENT",
-          "link": 48
+          "name": "",
+          "type": "*",
+          "link": 82
         }
       ],
       "outputs": [
         {
-          "name": "latent_output",
-          "type": "LATENT",
+          "name": "",
+          "type": "MODEL",
           "links": [
-            22
+            73
           ]
         }
       ],
       "properties": {
-        "Node name for S&R": "ZSamplerTurbo //ZImagePowerNodes",
-        "aux_id": "martin-rizzo/ComfyUI-ZImagePowerNodes",
-        "ver": "7cb3b03f95eeae260ebbc2facdf6ba6c1e16e639"
-      },
-      "widgets_values": [
-        1,
-        "fixed",
-        9,
-        1
-      ]
+        "showOutputText": false,
+        "horizontal": false
+      }
     },
     {
       "id": 20,
       "type": "Reroute",
       "pos": [
-        970,
-        790
+        1180,
+        800
       ],
       "size": [
         75,
@@ -135,145 +148,11 @@
       }
     },
     {
-      "id": 32,
-      "type": "EmptyZImageLatentImage //ZImagePowerNodes",
-      "pos": [
-        530,
-        20
-      ],
-      "size": [
-        316.9362396240234,
-        130
-      ],
-      "flags": {},
-      "order": 0,
-      "mode": 0,
-      "inputs": [],
-      "outputs": [
-        {
-          "name": "LATENT",
-          "type": "LATENT",
-          "links": [
-            48
-          ]
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "EmptyZImageLatentImage //ZImagePowerNodes"
-      },
-      "widgets_values": [
-        false,
-        "3:2  (photo)",
-        "medium (recommended)",
-        1
-      ]
-    },
-    {
-      "id": 31,
-      "type": "SaveImage //ZImagePowerNodes",
-      "pos": [
-        1360,
-        150
-      ],
-      "size": [
-        540,
-        760
-      ],
-      "flags": {},
-      "order": 13,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "images",
-          "type": "IMAGE",
-          "link": 47
-        }
-      ],
-      "outputs": [],
-      "properties": {
-        "Node name for S&R": "SaveImage //ZImagePowerNodes"
-      },
-      "widgets_values": [
-        "ZImage/%date:yyyy_MM_dd%/ZI",
-        true
-      ]
-    },
-    {
-      "id": 39,
-      "type": "Reroute",
-      "pos": [
-        70,
-        150
-      ],
-      "size": [
-        75,
-        26
-      ],
-      "flags": {},
-      "order": 5,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "",
-          "type": "*",
-          "link": 62
-        }
-      ],
-      "outputs": [
-        {
-          "name": "",
-          "type": "MODEL",
-          "links": [
-            57
-          ]
-        }
-      ],
-      "properties": {
-        "showOutputText": false,
-        "horizontal": false
-      }
-    },
-    {
-      "id": 40,
-      "type": "Reroute",
-      "pos": [
-        70,
-        440
-      ],
-      "size": [
-        75,
-        26
-      ],
-      "flags": {},
-      "order": 7,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "",
-          "type": "*",
-          "link": 64
-        }
-      ],
-      "outputs": [
-        {
-          "name": "",
-          "type": "VAE",
-          "links": [
-            59
-          ]
-        }
-      ],
-      "properties": {
-        "showOutputText": false,
-        "horizontal": false
-      }
-    },
-    {
       "id": 19,
       "type": "Reroute",
       "pos": [
-        200,
-        790
+        230,
+        800
       ],
       "size": [
         75,
@@ -304,11 +183,45 @@
       }
     },
     {
+      "id": 32,
+      "type": "EmptyZImageLatentImage //ZImagePowerNodes",
+      "pos": [
+        736.5000260003749,
+        25.666678410876642
+      ],
+      "size": [
+        316.92708333333337,
+        130
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            72
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "EmptyZImageLatentImage //ZImagePowerNodes"
+      },
+      "widgets_values": [
+        false,
+        "3:2  (photo)",
+        "medium (recommended)",
+        1
+      ]
+    },
+    {
       "id": 38,
       "type": "Reroute",
       "pos": [
-        70,
-        290
+        110,
+        300
       ],
       "size": [
         75,
@@ -321,7 +234,7 @@
         {
           "name": "",
           "type": "*",
-          "link": 63
+          "link": 83
         }
       ],
       "outputs": [
@@ -329,7 +242,7 @@
           "name": "",
           "type": "CLIP",
           "links": [
-            60
+            62
           ]
         }
       ],
@@ -339,10 +252,99 @@
       }
     },
     {
-      "id": 46,
+      "id": 40,
+      "type": "Reroute",
+      "pos": [
+        110,
+        450
+      ],
+      "size": [
+        75,
+        26
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "",
+          "type": "*",
+          "link": 84
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "VAE",
+          "links": [
+            59
+          ]
+        }
+      ],
+      "properties": {
+        "showOutputText": false,
+        "horizontal": false
+      }
+    },
+    {
+      "id": 43,
+      "type": "StylePromptEncoder2 //ZImagePowerNodes",
+      "pos": [
+        396.5000216648407,
+        215.66666596705838
+      ],
+      "size": [
+        670,
+        570
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 62
+        },
+        {
+          "name": "customization",
+          "shape": 7,
+          "type": "STRING",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            74
+          ]
+        },
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "StylePromptEncoder2 //ZImagePowerNodes"
+      },
+      "widgets_values": [
+        "\"Exposed Film Set\"",
+        null,
+        null,
+        "The interior of a bar features architecture with rounded, modular forms. A bar counter extends horizontally along the frame, showcasing a strip of acrylic. In the center-right, a man in his mid-thirties stands at the bar, resting one hand on the surface while holding a tall glass in the other. He turns his head to look directly at the camera, a playful, knowing smile spreading across his face. The glass contains a drink with small floating spheres that reflect the light. He wears a form-fitting uniform with a short, high collar and a single vertical stripe on the jacket. His brown hair is neatly styled with a clean, mid-century part. In the center, tending the bar, is a rather peculiar alien bartender, a colossal and terrifying humanoid figure resembling an octopus. He is a mass of tissue from whose torso emerges a network of thick tentacles. He is wearing black dress pants. And on its head, a set of multifaceted insectoid eyes constantly moves, scanning the room. The tentacles, with delicate pads at their tips, manipulate the glassware with unsettling grace. Behind the bartender, a mirrored wall reflects rows of liquor bottles with geometric labels. Above the bar floats a neon sign made of curved glass tubes that reads 'COSMIC LOUNGE' in tall, rounded letters, emitting light with a soft, glowing halo. An illuminated menu board reads 'SIGNATURE DRINKS' with three items: 'ORBITAL HIGHBALL,' 'NEBULA SOUR,' and 'ROCKET MARTINI,' each displayed on glowing horizontal bars. To the right, a cylindrical column features a vertical neon panel that reads 'OPEN 24 HOURS' in condensed letters within a translucent strip. To the left, a curved booth sits beneath a domed ceiling light. An illuminated sign reading 'GALAXY BAR SERVICE' encircles the inner rim of the dome in capitals and dominates the left side of the frame. Soft lighting reflects off the glass and acrylic surfaces, highlighting the structural design."
+      ],
+      "color": "#232",
+      "bgcolor": "#353",
+      "shape": 1
+    },
+    {
+      "id": 62,
       "type": "Note",
       "pos": [
-        -1250,
+        -1190,
         110
       ],
       "size": [
@@ -354,21 +356,20 @@
       "mode": 0,
       "inputs": [],
       "outputs": [],
-      "title": "README",
+      "title": "REQUIREMENTS",
       "properties": {},
       "widgets_values": [
         "Z-Image Power Nodes\n\n## Workflow Prerequisites ##\n\nThis workflow requires the following custom nodes, which can be obtained via ComfyUI-Manager:\n\n  * Z-Image Power Nodes: https://github.com/martin-rizzo/ComfyUI-ZImagePowerNodes\n\n Additionally, ensure you have the following 3 models downloaded and placed in their respective\n directories within your ComfyUI installation:\n\n  z_image_turbo_bf16.safetensors\n    * Download: https://huggingface.co/Comfy-Org/z_image_turbo/blob/main/split_files/diffusion_models/z_image_turbo_bf16.safetensors\n    * Local Directory: `ComfyUI/models/diffusion_models/`\n\n  qwen_3_4b.safetensors\n    * Download: https://huggingface.co/Comfy-Org/z_image_turbo/blob/main/split_files/text_encoders/qwen_3_4b.safetensors\n    * Local Directory: `ComfyUI/models/text_encoders/`\n\n  ae.safetensors\n    * Download: https://huggingface.co/Comfy-Org/z_image_turbo/blob/main/split_files/vae/ae.safetensors\n    * Local Directory: `Comfyui/models/vae/`\n\n## More Info ##\n\n- https://github.com/martin-rizzo/ComfyUI-ZImagePowerNodes\n- https://civitai.com/models/2322533/z-image-power-nodes\n\nCreated by Martin Rizzo\n  GitHub : https://github.com/martin-rizzo\n  CivitAI: https://civitai.com/user/Photographer\n  Reddit : https://www.reddit.com/user/FotografoVirtual\n"
       ],
-      "color": "#223",
-      "bgcolor": "#335",
-      "shape": 1
+      "color": "#432",
+      "bgcolor": "#653"
     },
     {
-      "id": 43,
+      "id": 65,
       "type": "UNETLoader",
       "pos": [
-        -360,
-        150
+        -300,
+        160
       ],
       "size": [
         380,
@@ -383,7 +384,7 @@
           "name": "MODEL",
           "type": "MODEL",
           "links": [
-            62
+            82
           ]
         }
       ],
@@ -401,11 +402,11 @@
       "shape": 1
     },
     {
-      "id": 44,
+      "id": 63,
       "type": "CLIPLoader",
       "pos": [
-        -360,
-        290
+        -300,
+        300
       ],
       "size": [
         380,
@@ -420,7 +421,7 @@
           "name": "CLIP",
           "type": "CLIP",
           "links": [
-            63
+            83
           ]
         }
       ],
@@ -439,11 +440,11 @@
       "shape": 1
     },
     {
-      "id": 45,
+      "id": 64,
       "type": "VAELoader",
       "pos": [
-        -360,
-        440
+        -300,
+        450
       ],
       "size": [
         380,
@@ -458,7 +459,7 @@
           "name": "VAE",
           "type": "VAE",
           "links": [
-            64
+            84
           ]
         }
       ],
@@ -475,68 +476,60 @@
       "shape": 1
     },
     {
-      "id": 42,
-      "type": "StylePromptEncoder //ZImagePowerNodes",
+      "id": 54,
+      "type": "ZSamplerTurbo //ZImagePowerNodes",
       "pos": [
-        200,
-        210
+        1080,
+        160
       ],
       "size": [
-        660,
-        570
+        330,
+        630
       ],
       "flags": {},
-      "order": 8,
+      "order": 10,
       "mode": 0,
       "inputs": [
         {
-          "name": "clip",
-          "type": "CLIP",
-          "link": 60
+          "name": "model",
+          "type": "MODEL",
+          "link": 73
         },
         {
-          "name": "customization",
-          "shape": 7,
-          "type": "STRING",
-          "link": null
+          "name": "positive",
+          "type": "CONDITIONING",
+          "link": 74
+        },
+        {
+          "name": "latent_input",
+          "type": "LATENT",
+          "link": 72
         }
       ],
       "outputs": [
         {
-          "name": "CONDITIONING",
-          "type": "CONDITIONING",
+          "name": "latent_output",
+          "type": "LATENT",
           "links": [
-            61
+            75
           ]
-        },
-        {
-          "name": "STRING",
-          "type": "STRING",
-          "links": null
         }
       ],
       "properties": {
-        "Node name for S&R": "StylePromptEncoder //ZImagePowerNodes"
+        "Node name for S&R": "ZSamplerTurbo //ZImagePowerNodes"
       },
       "widgets_values": [
-        "photo",
-        "\"Vintage Photo\"",
-        "The interior of a bar features architecture with rounded, modular forms. A bar counter extends horizontally along the frame, showcasing a strip of acrylic. In the center-right, a man in his mid-thirties stands at the bar, resting one hand on the surface while holding a tall glass in the other. He turns his head to look directly at the camera, a playful, knowing smile spreading across his face. The glass contains a drink with small floating spheres that reflect the light. He wears a form-fitting uniform with a short, high collar and a single vertical stripe on the jacket. His brown hair is neatly styled with a clean, mid-century part. In the center, tending the bar, is a rather peculiar alien bartender, a colossal and terrifying humanoid figure resembling an octopus. He is a mass of tissue from whose torso emerges a network of thick tentacles. He is wearing black dress pants. And on its head, a set of multifaceted insectoid eyes constantly moves, scanning the room. The tentacles, with delicate pads at their tips, manipulate the glassware with unsettling grace. Behind the bartender, a mirrored wall reflects rows of liquor bottles with geometric labels. Above the bar floats a neon sign made of curved glass tubes that reads 'COSMIC LOUNGE' in tall, rounded letters, emitting light with a soft, glowing halo. An illuminated menu board reads 'SIGNATURE DRINKS' with three items: 'ORBITAL HIGHBALL,' 'NEBULA SOUR,' and 'ROCKET MARTINI,' each displayed on glowing horizontal bars. To the right, a cylindrical column features a vertical neon panel that reads 'OPEN 24 HOURS' in condensed letters within a translucent strip. To the left, a curved booth sits beneath a domed ceiling light. An illuminated sign reading 'GALAXY BAR SERVICE' encircles the inner rim of the dome in capitals and dominates the left side of the frame. Soft lighting reflects off the glass and acrylic surfaces, highlighting the structural design."
-      ],
-      "color": "#232",
-      "bgcolor": "#353",
-      "shape": 1
+        2,
+        "fixed",
+        9,
+        1,
+        null,
+        "100%",
+        false
+      ]
     }
   ],
   "links": [
-    [
-      22,
-      18,
-      0,
-      8,
-      0,
-      "LATENT"
-    ],
     [
       24,
       19,
@@ -562,22 +555,6 @@
       "IMAGE"
     ],
     [
-      48,
-      32,
-      0,
-      18,
-      2,
-      "LATENT"
-    ],
-    [
-      57,
-      39,
-      0,
-      18,
-      0,
-      "MODEL"
-    ],
-    [
       59,
       40,
       0,
@@ -586,40 +563,64 @@
       "VAE"
     ],
     [
-      60,
+      62,
       38,
       0,
-      42,
+      43,
       0,
       "CLIP"
     ],
     [
-      61,
-      42,
+      72,
+      32,
       0,
-      18,
+      54,
+      2,
+      "LATENT"
+    ],
+    [
+      73,
+      39,
+      0,
+      54,
+      0,
+      "MODEL"
+    ],
+    [
+      74,
+      43,
+      0,
+      54,
       1,
       "CONDITIONING"
     ],
     [
-      62,
-      43,
+      75,
+      54,
+      0,
+      8,
+      0,
+      "LATENT"
+    ],
+    [
+      82,
+      65,
       0,
       39,
       0,
       "MODEL"
     ],
     [
+      83,
       63,
-      44,
       0,
       38,
       0,
       "CLIP"
     ],
     [
+      84,
       64,
-      45,
       0,
       40,
       0,
@@ -628,15 +629,15 @@
   ],
   "groups": [
     {
-      "id": 3,
+      "id": 4,
       "title": "SAFETENSORS MODELS",
       "bounding": [
-        -370,
+        -310,
         80,
         400,
         580
       ],
-      "color": "#A88",
+      "color": "#b58b2a",
       "font_size": 24,
       "flags": {}
     }
@@ -644,13 +645,13 @@
   "config": {},
   "extra": {
     "ds": {
-      "scale": 0.7513148009015778,
+      "scale": 0.8264462809917361,
       "offset": [
-        67.09298369222094,
-        181.25083580736575
+        -298.7727580681529,
+        91.32679011459588
       ]
     },
-    "frontendVersion": "1.35.9",
+    "frontendVersion": "1.37.11",
     "workflowRendererVersion": "LG"
   },
   "version": 0.4

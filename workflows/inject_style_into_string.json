@@ -56,9 +56,8 @@
       "widgets_values": [
         "This workflow demonstrates how to inject predefined styles within your prompt text. This is particularly useful for complex workflows where prompt manipulation is required.\n\nThe 'Style String Injector' node simply takes your input prompt and combines it with the selected style, outputting the final styled text.\n"
       ],
-      "color": "#223",
-      "bgcolor": "#335",
-      "shape": 1
+      "color": "#432",
+      "bgcolor": "#653"
     },
     {
       "id": 2,
