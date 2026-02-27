@@ -112,8 +112,8 @@ class ZSamplerTurboAdvanced(io.ComfyNode):
                 **kwargs
                 ) -> io.NodeOutput:
 
-        performing_inpainting = denoise < 0.99
-        denoise = denoise ** 0.074
+        performing_inpainting = denoise < 0.999
+        denoise = denoise ** 0.5
 
         # calibration level determines the amount of adjustment applied
         noise_bias_scale *= initial_noise_calibration
