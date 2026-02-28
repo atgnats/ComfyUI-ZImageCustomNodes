@@ -54,9 +54,17 @@
 
 ## Examples
 
-A few example workflows demonstrating basic usage of these nodes can be found in the **[/workflows](/workflows)** directory.
+ - [__"/workflows" directory__](/workflows)  
+   This folder contains reference workflows demonstrating the use of the Power Nodes across various tasks.
+   These are simple yet powerful examples that serve as an excellent resource for understanding how to utilize
+   each node.
+ - [__"/styles/samples_wf" directory__](/styles/samples_wf)  
+   This folder includes all the workflows used to generate the thumbnail images in the styles gallery.
+ - [__Z-Image Power Nodes on CivitAI__](https://civitai.com/models/2322533)  
+   Explore hundreds of images generated using the Z-Image model and the Power Nodes. Images posted by me
+   come with their prompts and complete generation workflows, which you can freely use as a starting point
+   for your own generations. Additionally, many users share their amazing creations in this community.
 
-And hundreds of images generated with Z-Image model and the Power Nodes are available on the **[Z-Image Power Nodes page on CivitAI](https://civitai.com/models/2322533)**. The images posted by me include their prompts and complete generation workflows and you can use them freely as a basis for your own images. Additionally, there are also many users sharing their amazing creations there.
 
 ## Installation
 _Ensure you have the latest version of [ComfyUi](https://github.com/comfyanonymous/ComfyUI)._
