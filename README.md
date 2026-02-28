@@ -1,11 +1,11 @@
 <div align="center">
 
 # Z-Image Power Nodes <br><sub><sup><i>Pushing the best image generation model to its limits!</i></sup></sub>
+[![Last](https://img.shields.io/badge/CivitAI%3A-Z--Image%3APower%3ANodes-EEE?labelColor=1971C2&logo=c%2B%2B&logoColor=white)](https://civitai.com/models/2322533/z-image-power-nodes)  
 [![Platform](https://img.shields.io/badge/platform%3A-ComfyUI-007BFF)](#)
 [![License](https://img.shields.io/github/license/martin-rizzo/ComfyUI-ZImagePowerNodes?label=license%3A&color=28A745)](#)
 [![Version](https://img.shields.io/github/v/tag/martin-rizzo/ComfyUI-ZImagePowerNodes?label=version%3A&color=D07250)](#)
-[![Last](https://img.shields.io/github/last-commit/martin-rizzo/ComfyUI-ZImagePowerNodes?label=last%20commit%3A)](#)
-
+[![Last](https://img.shields.io/github/last-commit/martin-rizzo/ComfyUI-ZImagePowerNodes?label=last%20commit%3A)](#)  
 <img src="banner_readme.jpg" width="90%"></img>
 
 </div>
