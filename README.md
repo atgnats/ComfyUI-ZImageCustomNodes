@@ -35,6 +35,14 @@
  * Seamlessly integrates a chosen style into your prompt text. It accepts a string as input and modifies it based on the selected style. \
    **["Style String Injector" node documentation](docs/style_string_injector.md)**
 
+### ⚡ My Top-10 Styles
+ * Allows you to create a list of favorite styles for quick selection of your most used ones.  \
+   **["My Top-10 Styles" node documentation](docs/my_top_10_styles.md)**.
+
+### ⚡ VAE Encode (for Soft Inpainting)
+ * Encodes images into a latent representation, embedding the mask that indicates where inpainting will be applied.  \
+   **["VAE Encode (for Soft Inpainting)](docs/vae_encode_for_soft_inpainting.md)**.
+
 ### ⚡ Save Image
  * Saves generated images with the option to embed CivitAI-compatible metadata, making it easy to share generation parameters through that platform. \
    **["Save Image" node documentation](docs/save_image.md)**.
@@ -42,13 +50,6 @@
 ### ⚡ Empty Z-Image Latent Image
  * Creates an empty latent image of the appropriate size for Z-Image, selecting aspect ratio, scale, and orientation.  \
    **["Empty Z-Image Latent Image" node documentation](docs/empty_zimage_latent_image.md)**.
-
-### 💀 ~~Photo-Style Prompt Encoder~~
- * Deprecated, use "Style & Prompt Encoder" node.
-
-### 💀 ~~Illustration-Style Prompt Encoder~~
- * Deprecated, use "Style & Prompt Encoder" node.
-
 
 
 ## Examples
