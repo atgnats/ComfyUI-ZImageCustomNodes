@@ -15,9 +15,9 @@ details or character descriptions, without specifying any particular style.
 Displays the currently active style, or "none" if no style will be applied.
 
 ### \<Select Style button\>
-Opens the styles gallery where you can easily choose from all available styles.  
-This includes search functionality, filtering options, and a sample image showing
-how each style would look.
+Opens the style gallery to browse and choose from available styles easily.  
+This includes search functionality, filtering options, and a sample image
+showing what each style would look like.
 
 
 ## Outputs
