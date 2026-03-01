@@ -128,17 +128,18 @@ Note: ComfyUI does not natively support GGUF format, so you need to install the 
  - __[ae.safetensors](https://huggingface.co/Comfy-Org/z_image_turbo/blob/main/split_files/vae/ae.safetensors)__ <sub>(335 MB)</sub>\
    Local Directory: __`ComfyUI/models/vae/`__
 
+
 ## ❤️ Support my work
+If you find these nodes useful or they’ve helped you in your projects, please consider supporting my work.  
+Your support allows me to keep my tools free and accessible for everyone.
 
-If you find these nodes useful or it has helped you in your projects, please consider becoming a sponsor. Your support allows me to keep my tools free and accessible for everyone.
+There are several ways to do so:
 
-- **Ko-fi:** https://ko-fi.com/martinrizzo
-
-<!--
-[![Sponsor](https://img.shields.io/badge/Sponsor-@martin_rizzo-2ea44f?style=for-the-badge&logo=github-sponsors&logoColor=white)](https://github.com/sponsors/martin-rizzo)
--->
+- **Ko-fi:** [https://ko-fi.com/martinrizzo](https://ko-fi.com/martinrizzo)
+-  **Give the repository a star:** if we reach 500 stars, big things could happen!
 
 *Every contribution, no matter how small, is greatly appreciated!*
+
 
 ## License
 
