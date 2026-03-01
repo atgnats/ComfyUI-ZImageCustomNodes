@@ -10,15 +10,15 @@
 
 </div>
 
-**Z-Image Power Nodes** is a collection of custom nodes designed specifically for the [Z-Image / Z-Image Turbo model](https://github.com/Tongyi-MAI/Z-Image). They are based on some ideas and discoveries I made while developing the [Amazing Z-Image Workflow](https://github.com/martin-rizzo/AmazingZImageWorkflow).
+**Z-Image Power Nodes** is a collection of nodes designed specifically for the [Z-Image / Z-Image Turbo model](https://github.com/Tongyi-MAI/Z-Image). They are based on some ideas and discoveries I made while developing the [Amazing Z-Image Workflow](https://github.com/martin-rizzo/AmazingZImageWorkflow).
 
-❤️ If you find these nodes useful or they’ve helped you in your projects, please consider supporting my work.  
+❤️ If you find these nodes useful or they’ve helped you in your projects, please consider supporting my work.
 Your support allows me to continue researching and creating new developments within the open source community.  
 There are several ways to do so:
   - **Give the repository a star:** if we reach 500 stars, big things could happen!
   - **Ko-fi:** [https://ko-fi.com/martinrizzo](https://ko-fi.com/martinrizzo)
 
-*Every contribution, no matter how small, is greatly appreciated!*
+*Every contribution, no matter how small, is greatly appreciated! Thank you.*
 
 
 ## Table of Contents
