@@ -67,10 +67,20 @@ class ZSamplerTurboAdvanced(io.ComfyNode):
                                       tooltip="The amount of denoising applied, lower values will maintain the structure of the initial image allowing for image to image sampling.",
                                      ),
                 io.Custom("ZIPN_DIVIDER").Input("divider"),
-                io.Combo.Input       ("sampler", default="euler", options=SAMPLER_NAMES,
-                                      tooltip="The sampler algorithm to use for denoising. "
-                                              "'euler' is the recommended default. "
-                                              "Note: sampling behavior may vary with different samplers."
+                io.Combo.Input       ("stage_1_sampler", default="euler", options=SAMPLER_NAMES,
+                                      tooltip="[ADVANCED] Sampler for stage 1 only. Leave as 'euler' for best results. "
+                                              "Overrides the main sampler for this stage. "
+                                              "Warning: Changing this may produce lower quality results as stages are calibrated together."
+                                     ),
+                io.Combo.Input       ("stage_2_sampler", default="euler", options=SAMPLER_NAMES,
+                                      tooltip="[ADVANCED] Sampler for stage 2 only. Leave as 'euler' for best results. "
+                                              "Overrides the main sampler for this stage. "
+                                              "Warning: Changing this may produce lower quality results as stages are calibrated together."
+                                     ),
+                io.Combo.Input       ("stage_3_sampler", default="euler", options=SAMPLER_NAMES,
+                                      tooltip="[ADVANCED] Sampler for stage 3 only. Leave as 'euler' for best results. "
+                                              "Overrides the main sampler for this stage. "
+                                              "Warning: Changing this may produce lower quality results as stages are calibrated together."
                                      ),
                 io.Float.Input       ("initial_noise_calibration", default=0.00, min=0.00, max=1.00, step=0.05,
                                       tooltip="The amount of adjustment applied to the initial noise (0 means no adjustment). "
@@ -110,7 +120,9 @@ class ZSamplerTurboAdvanced(io.ComfyNode):
                 seed                     : int,
                 steps                    : int,
                 denoise                  : float,
-                sampler                  : str,
+                stage_1_sampler          : str,
+                stage_2_sampler          : str,
+                stage_3_sampler          : str,
                 initial_noise_calibration: float,
                 noise_bias_estimation    : str,
                 noise_bias_sample_size   : str | int | None,
@@ -133,8 +145,10 @@ class ZSamplerTurboAdvanced(io.ComfyNode):
         # create a progress bar from 0 to 100
         progress = ProgressPreview.from_comfyui( model, 100 )
 
-        # create sampler object from the selected sampler name
-        sampler_object  = comfy.samplers.sampler_object(sampler)
+        # create sampler objects for each denoising stage
+        sampler1_object = comfy.samplers.sampler_object(stage_1_sampler)
+        sampler2_object = comfy.samplers.sampler_object(stage_2_sampler)
+        sampler3_object = comfy.samplers.sampler_object(stage_3_sampler)
 
         # `forced_size` is noise_bias_size converted to integer (pixels)
         # or None if "source" option was selected
@@ -217,7 +231,7 @@ class ZSamplerTurboAdvanced(io.ComfyNode):
         # (this calculation adds an extra step to the diffusion process)
         if noise_bias_scale != 0 and noise_bias_estimation != "none" and denoise >= 0.99:
             bias = cls.calculate_denoise_bias(latent_input, model, seed, positive, positive,
-                                              sampler     = sampler_object,
+                                              sampler     = sampler1_object,
                                               sigmas      = [sigma0, sigmas1[0]],
                                               method      = noise_bias_estimation,
                                               forced_size = forced_size,
@@ -228,7 +242,9 @@ class ZSamplerTurboAdvanced(io.ComfyNode):
         # execute the 3-stage denoising process
         latent_output = cls.execute_3_stage_denoising(latent_input,
                                                       model, seed, 1.0, positive, positive,
-                                                      sampler                 = sampler_object,
+                                                      sampler1                = sampler1_object,
+                                                      sampler2                = sampler2_object,
+                                                      sampler3                = sampler3_object,
                                                       sigmas1                 = sigmas1,
                                                       sigmas2                 = sigmas2,
                                                       sigmas3                 = sigmas3,
@@ -266,7 +282,9 @@ class ZSamplerTurboAdvanced(io.ComfyNode):
                                   positive : list,
                                   negative : list,
                                   *,
-                                  sampler     : comfy.samplers.KSAMPLER,
+                                  sampler1    : comfy.samplers.KSAMPLER,
+                                  sampler2    : comfy.samplers.KSAMPLER,
+                                  sampler3    : comfy.samplers.KSAMPLER,
                                   sigmas1     : torch.Tensor | list | None,
                                   sigmas2     : torch.Tensor | list | None,
                                   sigmas3     : torch.Tensor | list | None,
@@ -331,7 +349,7 @@ class ZSamplerTurboAdvanced(io.ComfyNode):
             add_noise = True
             latent_image = cls.execute_sampler(latent_image,
                                 model, seed, cfg, positive, negative,
-                                sampler          = sampler,
+                                sampler          = sampler1,
                                 sigmas           = sigmas1,
                                 noise_bias       = initial_noise_bias,
                                 noise_amplitude  = initial_noise_amplitude if add_noise else 0.0,
@@ -350,7 +368,7 @@ class ZSamplerTurboAdvanced(io.ComfyNode):
             if sigmas1 is None: add_noise = True
             latent_image = cls.execute_sampler(latent_image,
                                 model, seed, cfg, positive, negative,
-                                sampler          = sampler,
+                                sampler          = sampler2,
                                 sigmas           = sigmas2,
                                 noise_bias       = 0,
                                 noise_amplitude  = 1.0 if add_noise else 0.0,
@@ -364,7 +382,7 @@ class ZSamplerTurboAdvanced(io.ComfyNode):
             add_noise = True
             latent_image = cls.execute_sampler(latent_image,
                                 model, 696969, cfg, positive, negative,
-                                sampler          = sampler,
+                                sampler          = sampler3,
                                 sigmas           = sigmas3,
                                 noise_bias       = 0,
                                 noise_amplitude  = 1.0 if add_noise else 0.0,
