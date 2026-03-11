@@ -25,6 +25,7 @@ from typing             import Any
 from comfy_api.latest   import io
 from .lib.system        import logger
 from .lib.progress_bar  import ProgressPreview
+from comfy.samplers     import SAMPLER_NAMES
 
 
 class ZSamplerTurboAdvanced(io.ComfyNode):
@@ -66,6 +67,11 @@ class ZSamplerTurboAdvanced(io.ComfyNode):
                                       tooltip="The amount of denoising applied, lower values will maintain the structure of the initial image allowing for image to image sampling.",
                                      ),
                 io.Custom("ZIPN_DIVIDER").Input("divider"),
+                io.Combo.Input       ("sampler", default="euler", options=SAMPLER_NAMES,
+                                      tooltip="The sampler algorithm to use for denoising. "
+                                              "'euler' is the recommended default. "
+                                              "Note: sampling behavior may vary with different samplers."
+                                     ),
                 io.Float.Input       ("initial_noise_calibration", default=0.00, min=0.00, max=1.00, step=0.05,
                                       tooltip="The amount of adjustment applied to the initial noise (0 means no adjustment). "
                                               "This typically enhances image contrast and saturation, "
@@ -104,6 +110,7 @@ class ZSamplerTurboAdvanced(io.ComfyNode):
                 seed                     : int,
                 steps                    : int,
                 denoise                  : float,
+                sampler                  : str,
                 initial_noise_calibration: float,
                 noise_bias_estimation    : str,
                 noise_bias_sample_size   : str | int | None,
@@ -126,8 +133,8 @@ class ZSamplerTurboAdvanced(io.ComfyNode):
         # create a progress bar from 0 to 100
         progress = ProgressPreview.from_comfyui( model, 100 )
 
-        # only "euler" sampler has been tested with this technique
-        sampler  = comfy.samplers.sampler_object("euler")
+        # create sampler object from the selected sampler name
+        sampler_object  = comfy.samplers.sampler_object(sampler)
 
         # `forced_size` is noise_bias_size converted to integer (pixels)
         # or None if "source" option was selected
@@ -210,7 +217,7 @@ class ZSamplerTurboAdvanced(io.ComfyNode):
         # (this calculation adds an extra step to the diffusion process)
         if noise_bias_scale != 0 and noise_bias_estimation != "none" and denoise >= 0.99:
             bias = cls.calculate_denoise_bias(latent_input, model, seed, positive, positive,
-                                              sampler     = sampler,
+                                              sampler     = sampler_object,
                                               sigmas      = [sigma0, sigmas1[0]],
                                               method      = noise_bias_estimation,
                                               forced_size = forced_size,
@@ -221,7 +228,7 @@ class ZSamplerTurboAdvanced(io.ComfyNode):
         # execute the 3-stage denoising process
         latent_output = cls.execute_3_stage_denoising(latent_input,
                                                       model, seed, 1.0, positive, positive,
-                                                      sampler                 = sampler,
+                                                      sampler                 = sampler_object,
                                                       sigmas1                 = sigmas1,
                                                       sigmas2                 = sigmas2,
                                                       sigmas3                 = sigmas3,

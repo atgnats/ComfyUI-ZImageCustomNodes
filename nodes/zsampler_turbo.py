@@ -18,6 +18,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 from typing                       import Any
 from comfy_api.latest             import io
 from .zsampler_turbo_advanced  import ZSamplerTurboAdvanced
+from comfy.samplers               import SAMPLER_NAMES
 
 
 class ZSamplerTurbo(io.ComfyNode):
@@ -59,6 +60,11 @@ class ZSamplerTurbo(io.ComfyNode):
                                       tooltip="The amount of denoising applied, lower values will maintain the structure of the initial image allowing for image to image sampling.",
                                      ),
                 io.Custom            ("ZIPN_DIVIDER").Input("divider"),
+                io.Combo.Input       ("sampler", default="euler", options=SAMPLER_NAMES,
+                                      tooltip="The sampler algorithm to use for denoising. "
+                                              "'euler' is the recommended default. "
+                                              "Note: sampling behavior may vary with different samplers."
+                                     ),
                 io.Combo.Input       ("initial_noise_calibration", default="off", options=["100%", "75%", "50%", "25%", "off"],
                                        tooltip="The amount of adjustment applied to the initial noise. "
                                                "This typically enhances image contrast and saturation, "
@@ -83,6 +89,7 @@ class ZSamplerTurbo(io.ComfyNode):
                 seed        : int,
                 steps       : int,
                 denoise     : float,
+                sampler     : str,
                 initial_noise_calibration: str | float,
                 lowres_bias              : bool,
                 **kwargs
@@ -106,6 +113,7 @@ class ZSamplerTurbo(io.ComfyNode):
             seed                      = seed,
             steps                     = steps,
             denoise                   = denoise,
+            sampler                   = sampler,
             initial_noise_calibration = initial_noise_calibration,
             noise_bias_estimation     = noise_bias_estimation,
             noise_bias_sample_size    = 256 if lowres_bias else "image_size",
