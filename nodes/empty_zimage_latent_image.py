@@ -19,16 +19,16 @@ import comfy.model_management
 from comfy_api.latest import io
 
 LANDSCAPE_SIZES_BY_ASPECT_RATIO = {
-    "1:1  (square)"      : (1024.0, 1024.0), # Social media posts and profile pictures
-    "4:3  (retro tv)"    : (1182.4,  886.8), # Legacy television and older computer monitors
-    "3:2  (photo)"       : (1252.8,  837.0), # DSLR cameras and standard 35mm film # (1254.1, 836.1)
-    "16:10  (monitor)"   : (1295.3,  809.5), # Common in MacBooks and productivity laptops
-    "16:9  (widescreen)" : (1365.3,  768.0), # Current universal standard for video and TV
-    "2:1  (univisium)"   : (1448.2,  724.0), # Modern streaming series and smartphone screens
-    "21:9  (ultrawide)"  : (1564.2,  670.4), # Wide cinema format and ultrawide monitors
-    "12:5  (anamorphic)" : (1586.4,  661.0), # Standard theatrical widescreen cinema release
-    "70:27  (cinerama)"  : (1648.8,  636.0), # Extreme panoramic cinema format
-    "32:9  (super wide)" : (1930.9,  543.0), # Dual-monitor width for ultra-wide displays
+    "1:1  (square)"      : (1024, 1024), # Social media posts and profile pictures
+    "4:3  (retro tv)"    : (1152,  864), # Legacy television and older computer monitors
+    "3:2  (photo)"       : (1248,  832), # DSLR cameras and standard 35mm film
+    "16:10  (monitor)"   : (1280,  800), # Common in MacBooks and productivity laptops
+    "16:9  (widescreen)" : (1344,  768), # Current universal standard for video and TV
+    "2:1  (univisium)"   : (1440,  704), # Modern streaming series and smartphone screens
+    "21:9  (ultrawide)"  : (1536,  640), # Wide cinema format and ultrawide monitors
+    "12:5  (anamorphic)" : (1568,  640), # Standard theatrical widescreen cinema release
+    "70:27  (cinerama)"  : (1632,  608), # Extreme panoramic cinema format
+    "32:9  (super wide)" : (1920,  512), # Dual-monitor width for ultra-wide displays
     # "48:35  (35 mm)"     : (1199.2,  874.4),
     # "71:50  (~imax)"     : (1220.2,  859.3),
 }
