@@ -25,7 +25,7 @@ def io_Divider(id: str):
 
 
 class ZSamplerTurboExperimental(io.ComfyNode):
-    xTITLE         = "Z-Sampler Turbo Experimental"
+    xTITLE         = "Z-Sampler Turbo (Experimental)"
     xCATEGORY      = ""
     xCOMFY_NODE_ID = ""
     xDEPRECATED    = False
@@ -133,6 +133,9 @@ class ZSamplerTurboExperimental(io.ComfyNode):
                 **kwargs
                 ) -> io.NodeOutput:
 
+        # sets sigma limits when denoise is less than 1.0 (mostly when performing inpainting)
+        sigma_limits = (denoise ** 0.5, 0) if denoise < 0.999 else None
+
         # hardcoded initial noise configuration for this node
         noise_bias_estimation = "experimental"
         noise_bias_scale      = 0.12
@@ -153,13 +156,13 @@ class ZSamplerTurboExperimental(io.ComfyNode):
         latent_output = zsampler_turbo(latent_input, model, positive,
                                        seed                      = seed,
                                        steps                     = steps,
-                                       denoise                   = denoise,
                                        initial_noise_calibration = initial_noise_calibration,
                                        noise_bias_estimation     = noise_bias_estimation,
                                        noise_bias_sample_size    = 256 if lowres_bias else "image_size",
                                        noise_bias_scale          = noise_bias_scale,
                                        noise_overdose            = noise_overdose,
                                        sigma_offsets             = sigma_offsets,
+                                       sigma_limits              = sigma_limits,
                                        progress_preview          = progress_preview,
                                        )
         return io.NodeOutput(latent_output)

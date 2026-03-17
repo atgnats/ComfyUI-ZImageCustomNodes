@@ -25,23 +25,28 @@ def zsampler_turbo(latent_input             : dict[str, Any],
                    *,
                    seed                     : int,
                    steps                    : int,
-                   denoise                  : float,
                    initial_noise_calibration: float,
                    noise_bias_estimation    : str,
                    noise_bias_sample_size   : str | int | None,
                    noise_bias_scale         : float,
                    noise_overdose           : float,
-                   sigma_offsets            : list[float] = [0.0],
+                   sigma_offsets            : list[float] | None = None,
+                   sigma_limits             : list[float] | tuple[float,float] | None = None,
                    progress_preview         : ProgressPreview
                    ) -> dict[str, Any]:
 
-    performing_inpainting = denoise < 0.999
-    denoise = denoise ** 0.5
+    if sigma_limits is not None and len(sigma_limits)<2:
+        raise ValueError("sigma_limits must be a tuple or list with at least two elements")
+
+    # the first step is truncated (or discarded) when sigma limits are less than 1.0,
+    # typically during inpainting
+    first_step_is_truncated = sigma_limits and 0.999 >= max(sigma_limits[0], sigma_limits[1])
 
     # calibration level determines the amount of adjustment applied
     noise_bias_scale *= initial_noise_calibration
     noise_overdose   *= initial_noise_calibration
 
+    # for some reason that I don't fully understand
     # the "accurate" estimation method has a more sensitive scale
     if noise_bias_estimation == "accurate":
         noise_bias_scale /= 2
@@ -110,26 +115,30 @@ def zsampler_turbo(latent_input             : dict[str, Any],
         sigmas3  = None                                 #< (no refiner)
 
     # add the values of sigmas_offset to each sigma in the 3 lists
-    # (iterator over the offsets, padded with 0.0 just in case)
-    offset_iter = iter(sigma_offsets)
-    if isinstance(sigmas1, list):
-        for i in range( len(sigmas1) ):
-            sigmas1[i] += next(offset_iter, 0.0)
-    if isinstance(sigmas2, list):
-        for i in range(len(sigmas2) - 1):
-            sigmas2[i] += next(offset_iter, 0.0)
-    if isinstance(sigmas3, list):
-        for i in range(len(sigmas3) - 1):
-            sigmas3[i] += next(offset_iter, 0.0)
+    if sigma_offsets:
+        offset_iter = iter(sigma_offsets)
+        if isinstance(sigmas1, list):
+            for i in range( len(sigmas1) ):
+                sigmas1[i] += next(offset_iter, 0.0)
+        if isinstance(sigmas2, list):
+            for i in range(len(sigmas2) - 1):
+                sigmas2[i] += next(offset_iter, 0.0)
+        if isinstance(sigmas3, list):
+            for i in range(len(sigmas3) - 1):
+                sigmas3[i] += next(offset_iter, 0.0)
 
     # sigma0 is used only for estimating the initial noise bias (optional first step)
     # (denoising for that estimation step goes from sigma0 to sigmas1[0])
     sigma0 = 1.000
 
 
-    # if inpainting is being performed, we combine the first two stages into one
-    if performing_inpainting:
-        sigmas1 = sigmas1[:-1]
+    # if the first step was truncated (or discarded) by a forced limit
+    # of the sigmas, then the first two stages are combined into one.
+    # (this proved to be effective when `denoising < 1` during inpainting,
+    #  it would be nice to do some tests to see if it doesn't bring problems
+    #  in other situations)
+    if first_step_is_truncated:
+        sigmas1 = sigmas1[:-1] if sigmas1 else []
         sigmas1.extend( sigmas2 )
         sigmas2 = None
 
@@ -145,7 +154,7 @@ def zsampler_turbo(latent_input             : dict[str, Any],
 
     # `initial_noise_bias` is calculated ONLY if the user set a non-zero scale
     # (this calculation adds an extra step to the diffusion process)
-    if noise_bias_scale != 0 and noise_bias_estimation != "none" and denoise >= 0.99:
+    if noise_bias_scale != 0 and noise_bias_estimation != "none" and not first_step_is_truncated:
         bias = calculate_denoise_bias(latent_input, model, seed, positive, positive,
                                       sampler     = sampler,
                                       sigmas      = [sigma0, sigmas1[0]],
@@ -162,7 +171,7 @@ def zsampler_turbo(latent_input             : dict[str, Any],
                                               sigmas1                 = sigmas1,
                                               sigmas2                 = sigmas2,
                                               sigmas3                 = sigmas3,
-                                              sigma_limit             = denoise,
+                                              sigma_limits            = sigma_limits,
                                               initial_noise_bias      = initial_noise_bias,
                                               initial_noise_amplitude = initial_noise_amplitude,
                                               progress_preview = ProgressPreview( 100, parent=(progress_preview,100//steps,100) ),
@@ -192,11 +201,11 @@ def execute_3_stage_denoising(latent_image,
                                 positive : list,
                                 negative : list,
                                 *,
-                                sampler     : comfy.samplers.KSAMPLER,
-                                sigmas1     : torch.Tensor | list | None,
-                                sigmas2     : torch.Tensor | list | None,
-                                sigmas3     : torch.Tensor | list | None,
-                                sigma_limit : float | None = None,
+                                sampler      : comfy.samplers.KSAMPLER,
+                                sigmas1      : torch.Tensor | list | None,
+                                sigmas2      : torch.Tensor | list | None,
+                                sigmas3      : torch.Tensor | list | None,
+                                sigma_limits : list[float] | tuple[float,float] | None,
                                 initial_noise_bias     : torch.Tensor | float | int | None = None,
                                 initial_noise_amplitude: torch.Tensor | float | int | None = 1.0,
                                 progress_preview       : ProgressPreview,
@@ -238,10 +247,10 @@ def execute_3_stage_denoising(latent_image,
     if isinstance(sigmas3, list):
         sigmas3 = torch.tensor(sigmas3, device='cpu')
 
-    if isinstance(sigma_limit, (float,int)):
-        sigmas1 = truncate_sigmas(sigmas1, sigma_limit)
-        sigmas2 = truncate_sigmas(sigmas2, sigma_limit)
-        sigmas3 = truncate_sigmas(sigmas3, sigma_limit)
+    if isinstance(sigma_limits, (list,tuple)):
+        sigmas1 = truncate_sigmas(sigmas1, sigma_limits)
+        sigmas2 = truncate_sigmas(sigmas2, sigma_limits)
+        sigmas3 = truncate_sigmas(sigmas3, sigma_limits)
 
     # calculate the progress level for each step
     prog0 = 0
@@ -488,27 +497,65 @@ def calculate_denoise_bias(latent_image,
 
 
 
-def truncate_sigmas(sigmas: torch.Tensor | None, limit: float) -> torch.Tensor | None:
+def truncate_sigmas(sigmas : torch.Tensor | None,
+                    limits : list[float] | tuple[float,float] | None,
+                    ) -> torch.Tensor | None:
     """
-    Truncates a descending tensor of sigmas at a specific limit.
+    Truncates a *descending* tensor of sigmas inside a restricted range.
+
+    The returned tensor keeps the original order and contains only the values
+    that fall between `limits[0]` and `limits[1]`; if the original tensor
+    is clipped at either end, the corresponding limit value is appended
+    so that the final result always includes both boundaries.
+    If no value satisfies this condition the function returns `None`.
 
     Args:
-        sigmas: A tensor containing descending sigma values to be truncated.
-        limit : The threshold value to cap the tensor.
+        sigmas:
+            1-D tensor with sigma values sorted in **descending** order.
+        limits:
+            Sequence with at least two elements.
+            The first and second elements are used as the `(min, max)` range
+            that defines the interval for filtering.
+
     Returns:
-        A new tensor with values > limit followed by the limit itself.
+        A new tensor with the sigmas that lie inside `[min, max]`.
+        The tensor preserves the original descending order.
+        If `sigmas` is `None` the function returns `None`.
+        If `sigmas` is totally outside the limits, the function returns `None`.
     """
-    if sigmas is None:
+    if sigmas is None or sigmas.numel()==0:
+        return None
+    if limits is None:
+        return sigmas
+    if not isinstance(limits, (list, tuple)) or len(limits) < 2:
+        raise ValueError("`limits` must be a list or tuple with at least 2 elements")
+    if not (sigmas[0] >= sigmas[-1]):
+        raise ValueError("`sigmas` must be sorted in descending order")
+
+    # extract the lower and upper limits
+    lower, upper = limits[0], limits[1]
+    if lower > upper:
+        lower, upper = upper, lower
+
+    # if the range of sigmas is totally outside the limits
+    # then none of the sigmas should be returned
+    if sigmas[-1] > upper or lower > sigmas[0]:
         return None
 
-    # create the mask to filter out values > limit
-    mask = sigmas < limit
-    if not mask.any():
-        return None
-    if mask.all():
+    # create the mask to filter out values outside the range
+    valid_mask = (upper > sigmas) & (sigmas > lower)
+    if valid_mask.all():
         return sigmas
 
-    # filter the tensor using the mask and add the limit
-    truncated_sigmas = sigmas[mask]
-    limit_sigma = torch.tensor([limit], dtype=sigmas.dtype, device=sigmas.device)
-    return torch.cat((limit_sigma, truncated_sigmas))
+    # filter the tensor using the mask
+    truncated_sigmas = sigmas[valid_mask]
+
+    # add the lower/upper limits to the tensor if it was actually truncated
+    if not valid_mask[0]:
+        upper_sigma = torch.tensor([upper], dtype=sigmas.dtype, device=sigmas.device)
+        truncated_sigmas = torch.cat((upper_sigma, truncated_sigmas))
+    if not valid_mask[-1]:
+        lower_sigma = torch.tensor([lower], dtype=sigmas.dtype, device=sigmas.device)
+        truncated_sigmas = torch.cat((truncated_sigmas, lower_sigma))
+
+    return truncated_sigmas
