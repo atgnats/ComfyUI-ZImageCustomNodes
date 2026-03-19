@@ -20,6 +20,84 @@ from typing         import Any
 from .progress_bar  import ProgressPreview
 
 
+    #elif steps>=9:
+    #    sigmas1 = [0.990, 0.981, 0.911]                #< 2 steps
+    #    sigmas2 = [0.943, 0.850, 0.775, 0.640, 0.000]  #< 4 steps (=6 generation steps)
+    #    sigmas3 = [0.608, 0.486, 0.270, 0.000]         #< 3 steps (+3 refiner steps)
+
+    #elif steps>=9:
+    #    sigmas1 = [0.990, 0.980, 0.913]                #< 2 steps
+    #    sigmas2 = [0.941, 0.858, 0.725, 0.540, 0.000]  #< 4 steps (=6 generation steps)
+    #    sigmas3 = [0.708, 0.586, 0.270, 0.000]         #< 3 steps (+3 refiner steps)
+
+ALPHA_SIGMA_PRESET = (
+    (
+        [0.991, 0.980, 0.920],                 #< +2 steps
+        [0.942, 0.000],                        #< +1 steps
+        None,                                  #< (no refiner)
+    ),(
+        [0.991, 0.980, 0.920],                 #< +2 steps
+        [0.942, 0.000],                        #< +1 steps
+        [0.790, 0.000],                        #< +1 steps
+    ),(
+        [0.991, 0.980, 0.920],                 #< +2 steps
+        [0.942, 0.780, 0.000],                 #< +2 steps
+        [0.6200, 0.0000],                      #< +1 step
+    ),(
+        [0.991, 0.980, 0.920],                 #< +2 steps
+        [0.942, 0.780, 0.000],                 #< +2 steps
+        [0.6582, 0.3019, 0.0000],              #< +2 steps
+    ),(
+        [0.991, 0.980, 0.920],                 #< +2 steps
+        [0.9350, 0.8916, 0.7600, 0.0000],      #< +3 steps
+        [0.6582, 0.3019, 0.0000],              #< +2 steps
+
+    ),(
+        [0.991, 0.980, 0.920],                 #< +2 steps
+        [0.935, 0.90, 0.875, 0.750, 0.0000],   #< +4 steps
+        [0.6582, 0.3019, 0.0000],              #< +2 steps
+    ),(
+        [0.991, 0.980, 0.920],                 #< +2 steps
+        [0.935, 0.90, 0.875, 0.750, 0.0000],   #< +4 steps
+        [0.6582, 0.4556, 0.2000, 0.0000],      #< +3 steps
+    )
+)
+
+BRAVO_SIGMA_PRESET = (
+    (   [0.992, 0.977, 0.917],                #< 2 steps
+        [0.948, 0.000],                       #< 1 step  (=3 generation steps)
+        None,                                 #< (no refiner)
+    ),(
+        [0.992, 0.977, 0.917],                #< 2 steps
+        [0.948, 0.000],                       #< 1 step  (=3 generation steps)
+        [0.700, 0.000],                       #< 1 step  (+1 refiner step)
+    ),(
+        [0.992, 0.977, 0.917],                #< 2 steps
+        [0.948, 0.740, 0.000],                #< 2 steps (=4 generation steps)
+        [0.700, 0.000],                       #< 1 step  (+1 refiner step)
+    ),(
+        [0.992, 0.977, 0.917],                #< 2 steps
+        [0.948, 0.828, 0.570, 0.000],         #< 3 steps (=5 generation steps)
+        [0.700, 0.000],                       #< 1 step  (+1 refiner step)
+    ),(
+        [0.992, 0.977, 0.917],                #< 2 steps
+        [0.948, 0.828, 0.570, 0.000],         #< 3 steps (=5 generation steps)
+        [0.700, 0.280, 0.000],                #< 2 steps (+2 refiner steps)
+    ),(
+        [0.992, 0.977, 0.917],                #< 2 steps
+        [0.948, 0.858, 0.725, 0.540, 0.000],  #< 4 steps (=6 generation steps)
+        [0.700, 0.280, 0.000],                #< 2 steps (+2 refiner steps)
+    ),(
+        [0.992, 0.977, 0.917],                #< 2 steps
+        [0.948, 0.858, 0.725, 0.540, 0.000],  #< 4 steps (=6 generation steps)
+        [0.708, 0.586, 0.270, 0.000],         #< 3 steps (+3 refiner steps)
+    )
+)
+SIGMA_PRESETS_BY_NAME = {
+    "alpha"  : ALPHA_SIGMA_PRESET,
+    "bravo"  : BRAVO_SIGMA_PRESET,
+    "charlie": ALPHA_SIGMA_PRESET
+}
 
 def zsampler_turbo_core(latent_input             : dict[str, Any],
                         model                    : Any,
@@ -33,6 +111,7 @@ def zsampler_turbo_core(latent_input             : dict[str, Any],
                         noise_est_sample_size    : str | int | None   = None,
                         noise_est_sample_bias    : float              = 0.0,
                         noise_est_sample_scale   : float              = 0.1,
+                        sigma_preset_name        : str | None         = None,
                         sigma_offsets            : list[float] | None = None,
                         sigma_limits             : list[float] | tuple[float,float] | None = None,
                         progress_preview         : ProgressPreview
@@ -107,63 +186,29 @@ def zsampler_turbo_core(latent_input             : dict[str, Any],
     #   The transition from Stage 2 to Stage 3 can also be thought of as applying an "Euler-ancestral"
     #   sampling method instead of the standard "Euler", but only for that single step between stages.
     #
-    if steps>=9:
-        sigmas1  = [0.992, 0.977, 0.917]                #< 2 steps
-        sigmas2  = [0.948, 0.858, 0.725, 0.540, 0.000]  #< 4 steps (=6 generation steps)
-        sigmas3  = [0.708, 0.586, 0.270, 0.000]         #< 3 steps (+3 refiner steps)
+    sigma_preset = SIGMA_PRESETS_BY_NAME.get(sigma_preset_name) if sigma_preset_name else None
+    if not sigma_preset:
+        sigma_preset = SIGMA_PRESETS_BY_NAME["alpha"]
+    if len(sigma_preset) != 7:
+        raise ValueError(f"Sigma presets must have 7 elements but the \"{sigma_preset_name}\" preset has {len(sigma_preset)} elements")
+    index   = min(max( 3, steps), 9 ) - 3
+    sigmas1 = sigma_preset[index][0]
+    sigmas2 = sigma_preset[index][1]
+    sigmas3 = sigma_preset[index][2]
 
-        # when the number of steps is greater than 9, the same 9-step sigma
-        # sequences are used, but these sequences are refined to match the
-        # desired number of steps
-        if steps>=10:
-            additional_steps = (steps-9)
-            n1 = int( 0.4 + 0.6 * additional_steps )
-            n2 = additional_steps - n1
-            sigmas2 = refine_sigma_sequence(sigmas2, n1)
-            sigmas3 = refine_sigma_sequence(sigmas3, n2)
+    # when the number of steps is greater than 9, the same 9-step sigma
+    # sequence is used, but the Stage 2 and Stage 3 are refined to match
+    # the required number of steps
+    if steps>9:
+        additional_steps = (steps-9)
+        n1 = int( 0.4 + 0.6 * additional_steps )
+        n2 = additional_steps - n1
+        sigmas2 = refine_sigma_sequence(sigmas2, n1)
+        sigmas3 = refine_sigma_sequence(sigmas3, n2)
 
-    #elif steps>=9:
-    #    sigmas1 = [0.990, 0.981, 0.911]                #< 2 steps
-    #    sigmas2 = [0.943, 0.850, 0.775, 0.640, 0.000]  #< 4 steps (=6 generation steps)
-    #    sigmas3 = [0.608, 0.486, 0.270, 0.000]         #< 3 steps (+3 refiner steps)
 
-    #elif steps>=9:
-    #    sigmas1 = [0.990, 0.980, 0.913]                #< 2 steps
-    #    sigmas2 = [0.941, 0.858, 0.725, 0.540, 0.000]  #< 4 steps (=6 generation steps)
-    #    sigmas3 = [0.708, 0.586, 0.270, 0.000]         #< 3 steps (+3 refiner steps)
-
-    elif steps==8:
-        sigmas1  = [0.992, 0.977, 0.917]                #< 2 steps
-        sigmas2  = [0.948, 0.858, 0.725, 0.540, 0.000]  #< 4 steps (=6 generation steps)
-        sigmas3  = [0.700, 0.280, 0.000]                #< 2 steps (+2 refiner steps)
-
-    elif steps==7:
-        sigmas1  = [0.992, 0.977, 0.917]                #< 2 steps
-        sigmas2  = [0.948, 0.828, 0.570, 0.000]         #< 3 steps (=5 generation steps)
-        sigmas3  = [0.700, 0.280, 0.000]                #< 2 steps (+2 refiner steps)
-
-    elif steps==6:
-        sigmas1  = [0.992, 0.977, 0.917]                #< 2 steps
-        sigmas2  = [0.948, 0.828, 0.570, 0.000]         #< 3 steps (=5 generation steps)
-        sigmas3  = [0.700, 0.000]                       #< 1 step  (+1 refiner step)
-
-    elif steps==5:
-        sigmas1  = [0.992, 0.977, 0.917]                #< 2 steps
-        sigmas2  = [0.948, 0.740, 0.000]                #< 2 steps (=4 generation steps)
-        sigmas3  = [0.700, 0.000]                       #< 1 step  (+1 refiner step)
-
-    elif steps==4:
-        sigmas1  = [0.992, 0.977, 0.917]                #< 2 steps
-        sigmas2  = [0.948, 0.000]                       #< 1 step  (=3 generation steps)
-        sigmas3  = [0.700, 0.000]                       #< 1 step  (+1 refiner step)
-
-    elif steps<=3:
-        sigmas1  = [0.992, 0.977, 0.917]                #< 2 steps
-        sigmas2  = [0.948, 0.000]                       #< 1 step  (=3 generation steps)
-        sigmas3  = None                                 #< (no refiner)
-
-    # sigma0 is used only for estimating the initial noise bias (optional first step)
-    # (denoising for that estimation step goes from sigma0 to sigmas1[0])
+    # sigma0 is used only for estimating the initial noise bias (optional first step),
+    # the denoising for that estimation step goes from sigma0 to sigmas1[0]
     sigma0 = 1.000
 
     # add the values of sigmas_offset to each sigma in the 3 lists
@@ -706,7 +751,7 @@ def truncate_sigmas(sigmas : torch.Tensor | None,
     return truncated_sigmas
 
 
-def refine_sigma_sequence(sigmas: list[float], insert_count: int) -> list[float]:
+def refine_sigma_sequence(sigmas: list[float] | None, insert_count: int) -> list[float]:
     """
     Refines a sequence of sigmas by inserting midpoints between neighbors.
 
@@ -716,6 +761,9 @@ def refine_sigma_sequence(sigmas: list[float], insert_count: int) -> list[float]
     Returns:
         A new list containing the original points plus the added midpoints
     """
+    if not sigmas or len(sigmas)<2:
+        sigmas = [1.0, 0.0]
+
     # keep looping until there are no more sigmas to insert
     while insert_count > 0:
         new_sequence = [ sigmas[0] ]

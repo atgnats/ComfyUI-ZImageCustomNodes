@@ -92,6 +92,9 @@ class ZSamplerTurbo2Laboratory(io.ComfyNode):
 
                 io_Divider("divider2"),#=====================================
 
+                io.Combo.Input       ("sigma_preset_name", default="alpha", options=["alpha", "bravo", "charlie"],
+                                      tooltip="The set of predefined sigma values that are used during the denoise process. "
+                                     ),
                 io.Float.Input       ("sigma0_off", default=0.000, min=-1.000, max=1.000, step=0.001,
                                       #tooltip="",
                                      ),
@@ -146,6 +149,7 @@ class ZSamplerTurbo2Laboratory(io.ComfyNode):
                 initial_noise_bias_level : float,
                 initial_noise_scale_level: float,
                 initial_noise_overdose   : float,
+                sigma_preset_name        : str,
                 sigma0_off               : float,
                 sigma1_off               : float,
                 sigma2_off               : float,
@@ -176,6 +180,7 @@ class ZSamplerTurbo2Laboratory(io.ComfyNode):
                                             initial_noise_bias_level  = initial_noise_bias_level,
                                             initial_noise_scale_level = initial_noise_scale_level,
                                             initial_noise_overdose    = initial_noise_overdose,
+                                            sigma_preset_name         = sigma_preset_name,
                                             sigma_offsets             = sigma_offsets,
                                             sigma_limits              = sigma_limits,
                                             progress_preview = ProgressPreview.from_model( model ),
