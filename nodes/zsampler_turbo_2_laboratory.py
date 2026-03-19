@@ -1,6 +1,6 @@
 """
-File    : zsampler_turbo_experimental.py
-Purpose : Experimental node for denoising latent images using a set of custom sigmas with Z-Image Turbo (ZIT)
+File    : zsampler_turbo_2_laboratory.py
+Purpose : Development node for experimenting with the `zsampler_turbo_core(..)` method.
 Author  : Martin Rizzo | <martinrizzo@gmail.com>
 Date    : Mar 18, 2026
 Repo    : https://github.com/martin-rizzo/ComfyUI-ZImagePowerNodes
@@ -24,8 +24,8 @@ def io_Divider(id: str):
     return io.Custom("ZIPN_DIVIDER").Input(id = id)
 
 
-class ZSamplerTurboExperimental(io.ComfyNode):
-    xTITLE         = "Z-Sampler Turbo (Experimental)"
+class ZSamplerTurbo2Laboratory(io.ComfyNode):
+    xTITLE         = "Z-Sampler Turbo Gen2 (Laboratory)"
     xCATEGORY      = ""
     xCOMFY_NODE_ID = ""
     xDEPRECATED    = False

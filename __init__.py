@@ -130,8 +130,8 @@ class ZImagePowerNodesExtension(ComfyExtension):
         from .nodes.zsampler_turbo_advanced import ZSamplerTurboAdvanced
         _register_node( ZSamplerTurboAdvanced, nodes, subcategory )
 
-        from .nodes.zsampler_turbo_experimental import ZSamplerTurboExperimental
-        _register_node( ZSamplerTurboExperimental, nodes, subcategory )
+        from .nodes.zsampler_turbo_2_laboratory import ZSamplerTurbo2Laboratory
+        _register_node( ZSamplerTurbo2Laboratory, nodes, subcategory )
 
         from .nodes.my_top_10_styles import MyTop10Styles
         _register_node( MyTop10Styles, nodes, subcategory )
