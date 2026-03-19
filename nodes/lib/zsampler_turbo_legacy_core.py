@@ -1,8 +1,10 @@
 """
-File    : lib/zsampler_turbo_legacy_core.py
-Purpose : The legacy version of the "Z-Sampler Turbo" code.
+File    : zsampler_turbo_legacy_core.py
+Purpose : The core method for the legacy "Z-Sampler Turbo" process.
+          this code is deprecated and will be removed in the future,
+          it is kept for backward compatibility.
 Author  : Martin Rizzo | <martinrizzo@gmail.com>
-Date    : Mar 15, 2026
+Date    : Feb 1, 2026
 Repo    : https://github.com/martin-rizzo/ComfyUI-ZImagePowerNodes
 License : MIT
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -19,20 +21,20 @@ from typing         import Any
 from .progress_bar  import ProgressPreview
 
 
-def zsampler_turbo_legacy(latent_input             : dict[str, Any],
-                          model                    : Any,
-                          positive                 : list,
-                          *,
-                          seed                     : int,
-                          steps                    : int,
-                          denoise                  : float,
-                          initial_noise_calibration: float,
-                          noise_bias_estimation    : str,
-                          noise_bias_sample_size   : str | int | None,
-                          noise_bias_scale         : float,
-                          noise_overdose           : float,
-                          progress_preview         : ProgressPreview
-                          ) -> dict[str, Any]:
+def zsampler_turbo_legacy_core(latent_input             : dict[str, Any],
+                               model                    : Any,
+                               positive                 : list,
+                               *,
+                               seed                     : int,
+                               steps                    : int,
+                               denoise                  : float,
+                               initial_noise_calibration: float,
+                               noise_bias_estimation    : str,
+                               noise_bias_sample_size   : str | int | None,
+                               noise_bias_scale         : float,
+                               noise_overdose           : float,
+                               progress_preview         : ProgressPreview
+                               ) -> dict[str, Any]:
 
     performing_inpainting = denoise < 0.999
     denoise = denoise ** 0.5

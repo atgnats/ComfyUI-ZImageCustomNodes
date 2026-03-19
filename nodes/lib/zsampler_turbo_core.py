@@ -1,6 +1,6 @@
 """
-File    : lib/zsampler_turbo_core.py
-Purpose : The new version of the "Z-Sampler Turbo" code.
+File    : zsampler_turbo_core.py
+Purpose : The core method for the "Z-Sampler Turbo" process.
 Author  : Martin Rizzo | <martinrizzo@gmail.com>
 Date    : Mar 16, 2026
 Repo    : https://github.com/martin-rizzo/ComfyUI-ZImagePowerNodes
@@ -21,22 +21,22 @@ from .progress_bar  import ProgressPreview
 
 
 
-def zsampler_turbo(latent_input             : dict[str, Any],
-                   model                    : Any,
-                   positive                 : list,
-                   *,
-                   seed                     : int,
-                   steps                    : int,
-                   noise_est_sample_size    : str | int | None = None,
-                   noise_est_sample_bias    : float = 0.0,
-                   noise_est_sample_scale   : float = 0.1,
-                   initial_noise_bias_level : float,
-                   initial_noise_scale_level: float,
-                   initial_noise_overdose   : float,
-                   sigma_offsets            : list[float] | None = None,
-                   sigma_limits             : list[float] | tuple[float,float] | None = None,
-                   progress_preview         : ProgressPreview
-                   ) -> dict[str, Any]:
+def zsampler_turbo_core(latent_input             : dict[str, Any],
+                        model                    : Any,
+                        positive                 : list,
+                        *,
+                        seed                     : int,
+                        steps                    : int,
+                        initial_noise_bias_level : float,
+                        initial_noise_scale_level: float,
+                        initial_noise_overdose   : float,
+                        noise_est_sample_size    : str | int | None   = None,
+                        noise_est_sample_bias    : float              = 0.0,
+                        noise_est_sample_scale   : float              = 0.1,
+                        sigma_offsets            : list[float] | None = None,
+                        sigma_limits             : list[float] | tuple[float,float] | None = None,
+                        progress_preview         : ProgressPreview
+                        ) -> dict[str, Any]:
     """
     Perform the three-stage denoising process on a latent input.
 
@@ -46,24 +46,24 @@ def zsampler_turbo(latent_input             : dict[str, Any],
         positive                 : Positive conditioning for the denoising process.
         seed                     : The seed used for random number generation.
         steps                    : The total number of denoising steps. This value will
-                                   be used internally to determine the sigmas values.
+                                    be used internally to determine the sigmas values.
         noise_est_sample_size    : Size in pixels of the sample for initial noise estimation.
-                                   A string can be used to specify the size in pixels, e.g: "512px".
-                                   If `None`, the size of the latent input will be used.
+                                    A string can be used to specify the size in pixels, e.g: "512px".
+                                    If `None`, the size of the latent input will be used.
         noise_est_sample_bias    : The bias of the pure noise used in the initial noise estimation,
         noise_est_sample_scale   : The scale of the pure noise used in the initial noise estimation.,
         initial_noise_bias_level : The level of adjustament from the calculated noise bias to
-                                   apply before the first denoising step.
-                                   0.0 = no noise bias adjustment;
-                                   1.0 = using the 100% calculated noise bias
+                                    apply before the first denoising step.
+                                    0.0 = no noise bias adjustment;
+                                    1.0 = using the 100% calculated noise bias
         initial_noise_scale_level: The level of adjustament from the calculated noise scale to
-                                   apply before the first denoising step.
-                                   0.0 = no noise scale adjustment;
-                                   1.0 = using the 100% calculated noise scale.
+                                    apply before the first denoising step.
+                                    0.0 = no noise scale adjustment;
+                                    1.0 = using the 100% calculated noise scale.
         noise_overdose           : The level of over-amplitude in the initial noise scale.
-                                   0.0 = default noise scale;
-                                   positive values will increase the noise scale, e.g: 0.1 = 10% increment;
-                                   negative values will reduce the noise scale, e.g: -0.1 = 10% decrement.
+                                    0.0 = default noise scale;
+                                    positive values will increase the noise scale, e.g: 0.1 = 10% increment;
+                                    negative values will reduce the noise scale, e.g: -0.1 = 10% decrement.
         sigma_offsets            : Optional list of offsets to be added to the calculated sigma values.
         sigma_limits             : Optional tuple with minimum and maximum limits for sigma values.
         progress_preview         : A `ProgressPreview` object for displaying progress during the denoising process.
@@ -251,45 +251,45 @@ def zsampler_turbo(latent_input             : dict[str, Any],
 
 
 def execute_3_stage_denoising(latent_image,
-                                model    : Any,
-                                seed     : int,
-                                cfg      : float,
-                                positive : list,
-                                negative : list,
-                                *,
-                                sampler            : comfy.samplers.KSAMPLER,
-                                sigmas1            : torch.Tensor | list | None,
-                                sigmas2            : torch.Tensor | list | None,
-                                sigmas3            : torch.Tensor | list | None,
-                                sigma_limits       : list[float] | tuple[float,float] | None,
-                                initial_noise_bias : torch.Tensor | float | int | None = None,
-                                initial_noise_scale: torch.Tensor | float | int | None = 1.0,
-                                progress_preview   : ProgressPreview,
-                                ):
+                              model    : Any,
+                              seed     : int,
+                              cfg      : float,
+                              positive : list,
+                              negative : list,
+                              *,
+                              sampler            : comfy.samplers.KSAMPLER,
+                              sigmas1            : torch.Tensor | list | None,
+                              sigmas2            : torch.Tensor | list | None,
+                              sigmas3            : torch.Tensor | list | None,
+                              sigma_limits       : list[float] | tuple[float,float] | None,
+                              initial_noise_bias : torch.Tensor | float | int | None = None,
+                              initial_noise_scale: torch.Tensor | float | int | None = 1.0,
+                              progress_preview   : ProgressPreview,
+                              ):
     """
     Executes a three-stage denoising process on the provided latent image.
 
     Args:
-        latent_image: Dictionary containing data about the initial latent image to be processed.
-                        Includes keys like "samples" and optional "noise_mask", "batch_index".
-        model       : ComfyUI object representing the model to use for denoising.
-        seed        : The seed used to generate random noise.
-        cfg (float) : Classifier-free guidance scale that controls the influence of negative prompts.
-                        A value of 1.0 means the negative prompt has no effect on generation.
-        positive    : Positive prompts or conditioning applied to the model during denoising.
-        negative    : Negative prompts or conditioning applied to the model during denoising.
-        sampler     : ComfyUI object representing the sampler used for each denoising step.
-        sigmas1     : Sigma values for the first stage of denoising. Can be a tensor, list, or None.
-        sigmas2     : Sigma values for the second stage of denoising. Can be a tensor, list, or None.
-        sigmas3     : Sigma values for the third stage of denoising. Can be a tensor, list, or None.
+        latent_image       : Dictionary containing data about the initial latent image to be processed.
+                              Includes keys like "samples" and optional "noise_mask", "batch_index".
+        model              : ComfyUI object representing the model to use for denoising.
+        seed               : The seed used to generate random noise.
+        cfg (float)        : Classifier-free guidance scale that controls the influence of negative prompts.
+                              A value of 1.0 means the negative prompt has no effect on generation.
+        positive           : Positive prompts or conditioning applied to the model during denoising.
+        negative           : Negative prompts or conditioning applied to the model during denoising.
+        sampler            : ComfyUI object representing the sampler used for each denoising step.
+        sigmas1            : Sigma values for the first stage of denoising. Can be a tensor, list, or None.
+        sigmas2            : Sigma values for the second stage of denoising. Can be a tensor, list, or None.
+        sigmas3            : Sigma values for the third stage of denoising. Can be a tensor, list, or None.
         initial_noise_bias : An optional constant bias applied to the initial noise.
-                             (where 0.0 = no bias; None = no bias)
-                             Can be a tensor, scalar, or None.
-                             If tensor, it must have shape [batch_size, channels, 1, 1].
+                              (where 0.0 = no bias; None = no bias)
+                              Can be a tensor, scalar, or None.
+                              If tensor, it must have shape [batch_size, channels, 1, 1].
         initial_noise_scale: An optional scale factor applied to the initial noise.
-                             (where 0.0 = no-noise; 1.0 = standard deviation; None = standard deviation)
-                             Can be a tensor, scalar, or None.
-                             If tensor, it must have shape [batch_size, channels, 1, 1].
+                              (where 0.0 = no-noise; 1.0 = standard deviation; None = standard deviation)
+                              Can be a tensor, scalar, or None.
+                              If tensor, it must have shape [batch_size, channels, 1, 1].
     Returns:
         A dictionary with the updated latent image data after all three denoising stages.
     """
@@ -377,26 +377,27 @@ def execute_sampler(latent_image    : dict[str, Any],
                     progress_preview: ProgressPreview | None = None,
                     ) -> dict[str, Any]:
     """
-    Emulates comfyui's 'SamplerCustom' node with some extra functionality.
+    Emulates comfyui's 'SamplerCustom' node but with extra functionality.
+
     Args:
-        latent_image: Dictionary containing data about the initial latent image to denoise.
-                        (contains keys like "samples" and optional "noise_mask", "batch_index").
-        model       : ComfyUI object representing the model to use for denoising.
-        noise_seed  : The seed used to generate random noise.
-        cfg         : Classifier-free guidance scale that controls the strength of negative prompts.
-                        A value of 1.0 means the negative prompt has no effect on generation.
-        positive    : Positive prompts or conditioning applied to the model during denoising.
-        negative    : Negative prompts or conditioning applied to the model during denoising.
-        sampler     : ComfyUI object representing the sampler used for each denoising step.
-        sigmas      : Sigma values for each diffusion process step (can be list or torch.Tensor).
-        noise_bias  : The constant bias applied to the initial noise.
-                      (where 0.0 = no bias; None = no bias)
-                      Can be a tensor, scalar, or None.
-                      If tensor, it must have shape [batch_size, channels, 1, 1].
-        noise_scale : The scale factor applied to the initial noise.
-                      (where 0.0 = no-noise; 1.0 = standard deviation; None = standard deviation)
-                      Can be a tensor, scalar, or None.
-                      If tensor, it must have shape [batch_size, channels, 1, 1].
+        latent_image    : Dictionary containing data about the initial latent image to denoise.
+                           (contains keys like "samples" and optional "noise_mask", "batch_index").
+        model           : ComfyUI object representing the model to use for denoising.
+        noise_seed      : The seed used to generate random noise.
+        cfg             : Classifier-free guidance scale that controls the strength of negative prompts.
+                           A value of 1.0 means the negative prompt has no effect on generation.
+        positive        : Positive prompts or conditioning applied to the model during denoising.
+        negative        : Negative prompts or conditioning applied to the model during denoising.
+        sampler         : ComfyUI object representing the sampler used for each denoising step.
+        sigmas          : Sigma values for each diffusion process step (can be list or torch.Tensor).
+        noise_bias      : The constant bias applied to the initial noise.
+                           (where 0.0 = no bias; None = no bias)
+                           Can be a tensor, scalar, or None.
+                           If tensor, it must have shape [batch_size, channels, 1, 1].
+        noise_scale     : The scale factor applied to the initial noise.
+                           (where 0.0 = no-noise; 1.0 = standard deviation; None = standard deviation)
+                           Can be a tensor, scalar, or None.
+                           If tensor, it must have shape [batch_size, channels, 1, 1].
         keep_masked_area: If True, the masked area of the latent image will be kept unchanged.
                           Comfyui tries to keep masked area unchanged when there's a mask active
                           but activating this flag we're sure that no change will happen at all.
@@ -529,9 +530,9 @@ def generate_noise_(generator      : torch.Generator,
         noise_bias     : Optional constant offset added to the noise.
         noise_scale    : Optional scale factor applied to the raw normal noise.
         batch_subseeds : Optional list of small integers (0, 1, 2, …) that act as virtual seeds
-                         for every sample in the batch. Repetitions are allowed; repeated indices
-                         yield identical noise for those samples. If `None` or empty, every sample
-                         receives independent noise.
+                          for every sample in the batch. Repetitions are allowed; repeated indices
+                          yield identical noise for those samples. If `None` or empty, every sample
+                          receives independent noise.
         device         : Target device for the generated tensor.
     Returns:
         A noise tensor of the requested shape, already biased and scaled.

@@ -18,7 +18,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 from typing            import Any
 from comfy_api.latest  import io
 from .lib.progress_bar        import ProgressPreview
-from .lib.zsampler_turbo_core import zsampler_turbo
+from .lib.zsampler_turbo_core import zsampler_turbo_core
 
 def io_Divider(id: str):
     return io.Custom("ZIPN_DIVIDER").Input(id = id)
@@ -166,19 +166,19 @@ class ZSamplerTurboExperimental(io.ComfyNode):
         # creates a list of sigma offsets
         sigma_offsets = [sigma0_off, sigma1_off, sigma2_off, sigma3_off, sigma4_off, sigma5_off, sigma6_off, sigma7_off, sigma8_off, sigma9_off, sigma10_off]
 
-        # run the legacy Z-Sampler Turbo process on the latent image
-        latent_output = zsampler_turbo(latent_input, model, positive,
-                                       seed                      = seed,
-                                       steps                     = steps,
-                                       noise_est_sample_size     = noise_est_sample_size,
-                                       noise_est_sample_bias     = noise_est_sample_bias,
-                                       noise_est_sample_scale    = noise_est_sample_scale,
-                                       initial_noise_bias_level  = initial_noise_bias_level,
-                                       initial_noise_scale_level = initial_noise_scale_level,
-                                       initial_noise_overdose    = initial_noise_overdose,
-                                       sigma_offsets             = sigma_offsets,
-                                       sigma_limits              = sigma_limits,
-                                       progress_preview = ProgressPreview.from_model( model ),
-                                       )
+        # run the Z-Sampler Turbo core method on the latent image
+        latent_output = zsampler_turbo_core(latent_input, model, positive,
+                                            seed                      = seed,
+                                            steps                     = steps,
+                                            noise_est_sample_size     = noise_est_sample_size,
+                                            noise_est_sample_bias     = noise_est_sample_bias,
+                                            noise_est_sample_scale    = noise_est_sample_scale,
+                                            initial_noise_bias_level  = initial_noise_bias_level,
+                                            initial_noise_scale_level = initial_noise_scale_level,
+                                            initial_noise_overdose    = initial_noise_overdose,
+                                            sigma_offsets             = sigma_offsets,
+                                            sigma_limits              = sigma_limits,
+                                            progress_preview = ProgressPreview.from_model( model ),
+                                            )
 
         return io.NodeOutput(latent_output)
