@@ -109,41 +109,58 @@ def zsampler_turbo(latent_input             : dict[str, Any],
     #   sampling method instead of the standard "Euler", but only for that single step between stages.
     #
     if steps>=9:
-        #sigmas1 = [0.990, 0.981, 0.911]                #< 2 steps
-        sigmas1  = [0.988, 0.981, 0.911]                #< 2 steps
-        #sigmas2 = [0.943, 0.850, 0.775, 0.640, 0.000]  #< 4 steps (=6 generation steps)
-        sigmas2  = [0.936, 0.858, 0.725, 0.540, 0.000]  #< 4 steps (=6 generation steps)
-        #sigmas3 = [0.608, 0.486, 0.270, 0.000]         #< 3 steps (+3 refiner steps)
+        sigmas1  = [0.992, 0.977, 0.917]                #< 2 steps
+        sigmas2  = [0.948, 0.858, 0.725, 0.540, 0.000]  #< 4 steps (=6 generation steps)
         sigmas3  = [0.708, 0.586, 0.270, 0.000]         #< 3 steps (+3 refiner steps)
 
+        # when the number of steps is greater than 9, the same 9-step sigma
+        # sequences are used, but these sequences are refined to match the
+        # desired number of steps
+        if steps>=10:
+            additional_steps = (steps-9)
+            n1 = int( 0.4 + 0.6 * additional_steps )
+            n2 = additional_steps - n1
+            sigmas2 = refine_sigma_sequence(sigmas2, n1)
+            sigmas3 = refine_sigma_sequence(sigmas3, n2)
+
+    #elif steps>=9:
+    #    sigmas1 = [0.990, 0.981, 0.911]                #< 2 steps
+    #    sigmas2 = [0.943, 0.850, 0.775, 0.640, 0.000]  #< 4 steps (=6 generation steps)
+    #    sigmas3 = [0.608, 0.486, 0.270, 0.000]         #< 3 steps (+3 refiner steps)
+
+    #elif steps>=9:
+    #    sigmas1 = [0.990, 0.980, 0.913]                #< 2 steps
+    #    sigmas2 = [0.941, 0.858, 0.725, 0.540, 0.000]  #< 4 steps (=6 generation steps)
+    #    sigmas3 = [0.708, 0.586, 0.270, 0.000]         #< 3 steps (+3 refiner steps)
+
     elif steps==8:
-        sigmas1  = [0.990, 0.981, 0.911]                #< 2 steps
-        sigmas2  = [0.943, 0.850, 0.775, 0.640, 0.000]  #< 4 steps (=6 generation steps)
-        sigmas3  = [0.608, 0.202, 0.000]                #< 2 steps (+2 refiner steps)
+        sigmas1  = [0.992, 0.977, 0.917]                #< 2 steps
+        sigmas2  = [0.948, 0.858, 0.725, 0.540, 0.000]  #< 4 steps (=6 generation steps)
+        sigmas3  = [0.700, 0.280, 0.000]                #< 2 steps (+2 refiner steps)
 
     elif steps==7:
-        sigmas1  = [0.990, 0.981, 0.911]                #< 2 steps
-        sigmas2  = [0.943, 0.842, 0.660, 0.000]         #< 3 steps (=5 generation steps)
-        sigmas3  = [0.608, 0.202, 0.000]                #< 2 steps (+2 refiner steps)
+        sigmas1  = [0.992, 0.977, 0.917]                #< 2 steps
+        sigmas2  = [0.948, 0.828, 0.570, 0.000]         #< 3 steps (=5 generation steps)
+        sigmas3  = [0.700, 0.280, 0.000]                #< 2 steps (+2 refiner steps)
 
     elif steps==6:
-        sigmas1  = [0.990, 0.981, 0.911]                #< 2 steps
-        sigmas2  = [0.943, 0.842, 0.660, 0.000]         #< 3 steps (=5 generation steps)
-        sigmas3  = [0.630, 0.000]                       #< 1 step  (+1 refiner step)
+        sigmas1  = [0.992, 0.977, 0.917]                #< 2 steps
+        sigmas2  = [0.948, 0.828, 0.570, 0.000]         #< 3 steps (=5 generation steps)
+        sigmas3  = [0.700, 0.000]                       #< 1 step  (+1 refiner step)
 
     elif steps==5:
-        sigmas1  = [0.990, 0.981, 0.911]                #< 2 steps
-        sigmas2  = [0.941, 0.770, 0.000]                #< 2 steps (=4 generation steps)
-        sigmas3  = [0.520, 0.000]                       #< 1 step  (+1 refiner step)
+        sigmas1  = [0.992, 0.977, 0.917]                #< 2 steps
+        sigmas2  = [0.948, 0.740, 0.000]                #< 2 steps (=4 generation steps)
+        sigmas3  = [0.700, 0.000]                       #< 1 step  (+1 refiner step)
 
     elif steps==4:
-        sigmas1  = [0.990, 0.981, 0.911]                #< 2 steps
-        sigmas2  = [0.939, 0.000]                       #< 1 step  (=3 generation steps)
-        sigmas3  = [0.780, 0.000]                       #< 1 step  (+1 refiner step)
+        sigmas1  = [0.992, 0.977, 0.917]                #< 2 steps
+        sigmas2  = [0.948, 0.000]                       #< 1 step  (=3 generation steps)
+        sigmas3  = [0.700, 0.000]                       #< 1 step  (+1 refiner step)
 
     elif steps<=3:
-        sigmas1  = [0.989, 0.981, 0.911]                #< 2 steps
-        sigmas2  = [0.929, 0.000]                       #< 1 step  (=3 generation steps)
+        sigmas1  = [0.992, 0.977, 0.917]                #< 2 steps
+        sigmas2  = [0.948, 0.000]                       #< 1 step  (=3 generation steps)
         sigmas3  = None                                 #< (no refiner)
 
     # sigma0 is used only for estimating the initial noise bias (optional first step)
@@ -300,7 +317,6 @@ def execute_3_stage_denoising(latent_image,
 
 
     #-- THREE-STAGE PROCESS ---------------------------
-
     if sigmas1 is not None:
         add_noise = True
         latent_image = execute_sampler(latent_image,
@@ -313,8 +329,6 @@ def execute_3_stage_denoising(latent_image,
                             progress_preview = ProgressPreview( prog1-prog0,
                                     parent=(progress_preview, 100*prog0//total, 100*prog1//total)),
                             )
-
-
 
     if sigmas2 is not None:
         add_noise = False
@@ -333,7 +347,6 @@ def execute_3_stage_denoising(latent_image,
                                    parent=(progress_preview, 100*prog1//total, 100*prog2//total)),
                         )
 
-
     if sigmas3 is not None:
         add_noise = True
         latent_image = execute_sampler(latent_image,
@@ -347,7 +360,6 @@ def execute_3_stage_denoising(latent_image,
                                 parent=(progress_preview, 100*prog2//total, 100*total//total)),
                         )
     return latent_image
-
 
 
 def execute_sampler(latent_image    : dict[str, Any],
@@ -444,9 +456,6 @@ def execute_sampler(latent_image    : dict[str, Any],
                             layout  = samples.layout,
                             device  = "cpu")
     else:
-        print("##>>------------------")
-        print("##>> GENERATING NOISE!!")
-        print("##>>------------------")
         noise = generate_noise(noise_seed,
                                samples.shape,
                                dtype   = samples.dtype,
@@ -485,6 +494,8 @@ def execute_sampler(latent_image    : dict[str, Any],
     return out
 
 
+#============================ NOISE PROCESSING =============================#
+
 def generate_noise(seed           : int,
                    shape          : tuple[int, ...],
                    dtype          : torch.dtype,
@@ -494,6 +505,9 @@ def generate_noise(seed           : int,
                    batch_subseeds : list[int] | None                  = None,
                    device         : str | torch.device                = "cpu"
                    ):
+    """
+    Generate batched noise with optional per-sample 'virtual' sub-seeds.
+    """
     generator = torch.manual_seed(seed)
     return generate_noise_(generator, shape, dtype, layout, noise_bias, noise_amplitude, batch_subseeds, device)
 
@@ -515,60 +529,53 @@ def generate_noise_(generator      : torch.Generator,
         shape          : Noise shape. The first dimension is the batch size.
         dtype          : The floating-point dtype of the generated tensor.
         layout         : torch.strided or torch.sparse_coo, etc.
-        noise_bias     : Constant offset added to every element in the noise.
-        noise_amplitude: Scale factor applied to the raw normal noise.
-        batch_subseeds : List of small integers (0, 1, 2, …) that act as virtual seeds for every
-                         sample in the batch. Repetitions are allowed; repeated indices yield
-                         identical noise for those samples. If `None` or empty, every sample
+        noise_bias     : Optional constant offset added to the noise.
+        noise_amplitude: Optional scale factor applied to the raw normal noise.
+        batch_subseeds : Optional list of small integers (0, 1, 2, …) that act as virtual seeds
+                         for every sample in the batch. Repetitions are allowed; repeated indices
+                         yield identical noise for those samples. If `None` or empty, every sample
                          receives independent noise.
         device         : Target device for the generated tensor.
-
     Returns:
         A noise tensor of the requested shape, already biased and scaled.
     """
-
-    print("##>> noise_bias:", noise_bias.shape if isinstance(noise_bias,torch.Tensor) else noise_bias if isinstance(noise_bias,(float,int)) else "None")
-    print("##>> noise_amplitude:", noise_amplitude.shape if isinstance(noise_amplitude,torch.Tensor) else noise_amplitude if isinstance(noise_amplitude,(float,int)) else "None")
-
-    if not batch_subseeds:
+    if batch_subseeds:
+        # batch subseeds were provided, indicating the virtual seed value for
+        # generating noise for each batch element. These values should be small
+        # integers like [0, 1, 2, 3] or [0, 1, 0, 1], or even [0, 0, 0, 0] if
+        # identical noise is desired for all elements in the batch.
+        unique_subseeds, inverse = np.unique(batch_subseeds, return_inverse=True)
+        max_subseed              = unique_subseeds.max()
+        subnoise_shape           = [1] + list(shape)[1:]
+        subnoises : list[torch.Tensor] = []
+        for subseed in range(max_subseed+1):
+            subnoise = torch.randn(subnoise_shape, dtype=dtype, layout=layout, generator=generator, device=device)
+            if subseed in unique_subseeds:
+                subnoises.append(subnoise)
+        noise = torch.cat( [subnoises[i] for i in inverse] )
+    else:
+        # if no batch subseeds are provided, generate a single noise tensor for
+        # the entire batch with fully random values.
         noise = torch.randn(shape, dtype=dtype, layout=layout, generator=generator, device=device)
-        if noise_amplitude is not None: noise *= noise_amplitude
-        if noise_bias      is not None: noise += noise_bias
-        return noise
 
-    # en este punto batch_subseeds fue suministrado el cual es una lista que indica
-    # que valor de seed virtual se usara para generar el ruido de cada elemento del
-    # batch; deben ser siempre valores pequeños como [0,1,2,3] o [0,1,0,1] o
-    # incluso [0,0,0,0] si se desea que todos los elementos del batch tengan el mismo ruido
-    unique_subseeds, inverse = np.unique(batch_subseeds, return_inverse=True)
-    max_subseed              = unique_subseeds.max()
-    subnoise_shape           = [1] + list(shape)[1:]
-
-    subnoises : list[torch.Tensor] = []
-    for subseed in range(max_subseed+1):
-        subnoise = torch.randn(subnoise_shape, dtype=dtype, layout=layout, generator=generator, device=device)
-        if subseed in unique_subseeds:
-            subnoises.append(subnoise)
-
-    noise = torch.cat( [subnoises[i] for i in inverse] )
+     # apply noise bias and amplitude if provided
     if noise_amplitude is not None: noise *= noise_amplitude
     if noise_bias      is not None: noise += noise_bias
     return noise
 
 
-
 def estimate_initial_noise_features(latent_image,
-                           model    : Any,
-                           seed     : int,
-                           positive : list,
-                           negative : list,
-                           *,
-                           sampler  : comfy.samplers.KSAMPLER,
-                           sigmas   : list | torch.Tensor,
-                           method   : str = 'accurate',  #< "accurate" or "experimental"
-                           forced_size     : int | None = None,  #< optional, forced size of the sample
-                           progress_preview: ProgressPreview
-                           ) -> tuple[torch.Tensor, torch.Tensor]:
+                                    model    : Any,
+                                    seed     : int,
+                                    positive : list,
+                                    negative : list,
+                                    *,
+                                    sampler  : comfy.samplers.KSAMPLER,
+                                    sigmas   : list | torch.Tensor,
+                                    method   : str = 'accurate',  #< "accurate" or "experimental"
+                                    forced_size     : int | None = None,  #< optional, forced size of the sample
+                                    progress_preview: ProgressPreview
+                                    ) -> tuple[torch.Tensor, torch.Tensor]:
     """
     Calculates the denoised bias for a given sigma value.
 
@@ -625,6 +632,7 @@ def estimate_initial_noise_features(latent_image,
     return bias, amplitude
 
 
+#============================ SIGMA OPERATIONS =============================#
 
 def truncate_sigmas(sigmas : torch.Tensor | None,
                     limits : list[float] | tuple[float,float] | None,
@@ -688,3 +696,30 @@ def truncate_sigmas(sigmas : torch.Tensor | None,
         truncated_sigmas = torch.cat((truncated_sigmas, lower_sigma))
 
     return truncated_sigmas
+
+
+def refine_sigma_sequence(sigmas: list[float], insert_count: int) -> list[float]:
+    """
+    Refines a sequence of sigmas by inserting midpoints between neighbors.
+
+    Args:
+        sigmas      : List of sigmas (e.g., [0.948, 0.858, ..., 0.0])
+        insert_count: Total number of new sigmas to insert into the list
+    Returns:
+        A new list containing the original points plus the added midpoints
+    """
+    # keep looping until there are no more sigmas to insert
+    while insert_count > 0:
+        new_sequence = [ sigmas[0] ]
+
+        for i in range(len(sigmas) - 1):
+            # insert a midpoint between current sigma and next sigma
+            if insert_count > 0:
+                new_sequence.append( (sigmas[i] + sigmas[i+1]) / 2 )
+                insert_count -= 1
+            # re-insert the original sigma
+            new_sequence.append( sigmas[i+1] )
+
+        sigmas = new_sequence
+
+    return sigmas
