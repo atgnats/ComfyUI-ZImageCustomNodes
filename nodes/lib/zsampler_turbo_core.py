@@ -113,7 +113,8 @@ def zsampler_turbo_core(latent_input             : dict[str, Any],
                         noise_est_sample_scale   : float              = 0.1,
                         sigma_preset_name        : str | None         = None,
                         sigma_offsets            : list[float] | None = None,
-                        sigma_limits             : list[float] | tuple[float,float] | None = None,
+                        sigma_limits             : tuple[float,float] | list[float] | None = None,
+                        sigma_step_range         : tuple[int,int] | list[int] | None       = None,
                         return_leftover_noise    : bool = False,
                         progress_preview         : ProgressPreview
                         ) -> dict[str, Any]:
@@ -146,8 +147,8 @@ def zsampler_turbo_core(latent_input             : dict[str, Any],
                                     negative values will reduce the noise scale, e.g: -0.1 = 10% decrement.
         sigma_offsets            : Optional list of offsets to be added to the calculated sigma values.
         sigma_limits             : Optional tuple with minimum and maximum limits for sigma values.
-        return_leftover_noise    : If True, stops the sampler without clearing residual noise;
-                                    useful for preserving noise state when chaining to another sampler.
+        return_leftover_noise    : If True, ends the sampler without clearing residual noise;
+                                    useful for preserving noise state when truncating steps and chaining to another sampler.
         progress_preview         : A `ProgressPreview` object for displaying progress during the denoising process.
 
     Returns:
@@ -285,14 +286,15 @@ def zsampler_turbo_core(latent_input             : dict[str, Any],
     # execute the 3-stage denoising process
     latent_output = execute_3_stage_denoising(latent_input,
                                               model, seed, 1.0, positive, positive,
-                                              sampler               = sampler,
-                                              sigmas1               = sigmas1,
-                                              sigmas2               = sigmas2,
-                                              sigmas3               = sigmas3,
-                                              sigma_limits          = sigma_limits,
-                                              initial_noise_bias    = initial_noise_bias,
-                                              initial_noise_scale   = initial_noise_scale,
-                                              return_leftover_noise = return_leftover_noise,
+                                              sampler             = sampler,
+                                              sigmas1             = sigmas1,
+                                              sigmas2             = sigmas2,
+                                              sigmas3             = sigmas3,
+                                              sigma_limits        = sigma_limits,
+                                              sigma_step_range    = sigma_step_range,
+                                              initial_noise_bias  = initial_noise_bias,
+                                              initial_noise_scale = initial_noise_scale,
+                                              force_final_denoise = not return_leftover_noise,
                                               progress_preview = ProgressPreview( 100, parent=(progress_preview,100//steps,100) ),
                                               )
     return latent_output
@@ -313,6 +315,9 @@ def zsampler_turbo_core(latent_input             : dict[str, Any],
     #----------------------------------------------------------------------------
 
 
+def step_count(sigmas: torch.Tensor | None) -> int:
+    return sigmas.shape[-1]-1 if sigmas is not None else 0
+
 def execute_3_stage_denoising(latent_image,
                               model    : Any,
                               seed     : int,
@@ -320,15 +325,16 @@ def execute_3_stage_denoising(latent_image,
                               positive : list,
                               negative : list,
                               *,
-                              sampler              : comfy.samplers.KSAMPLER,
-                              sigmas1              : torch.Tensor | list | None,
-                              sigmas2              : torch.Tensor | list | None,
-                              sigmas3              : torch.Tensor | list | None,
-                              sigma_limits         : list[float] | tuple[float,float] | None,
-                              initial_noise_bias   : torch.Tensor | float | int | None = None,
-                              initial_noise_scale  : torch.Tensor | float | int | None = 1.0,
-                              return_leftover_noise: bool = False,
-                              progress_preview     : ProgressPreview,
+                              sampler            : comfy.samplers.KSAMPLER,
+                              sigmas1            : torch.Tensor | list | None,
+                              sigmas2            : torch.Tensor | list | None,
+                              sigmas3            : torch.Tensor | list | None,
+                              sigma_limits       : tuple[float,float] | list[float] | None = None,
+                              sigma_step_range   : tuple[int,int]     | list[int]   | None = None,
+                              initial_noise_bias : torch.Tensor | float | int | None       = None,
+                              initial_noise_scale: torch.Tensor | float | int | None       = 1.0,
+                              force_final_denoise: bool = False,
+                              progress_preview   : ProgressPreview,
                               ):
     """
     Executes a three-stage denoising process on the provided latent image.
@@ -346,6 +352,11 @@ def execute_3_stage_denoising(latent_image,
         sigmas1            : Sigma values for the first stage of denoising. Can be a tensor, list, or None.
         sigmas2            : Sigma values for the second stage of denoising. Can be a tensor, list, or None.
         sigmas3            : Sigma values for the third stage of denoising. Can be a tensor, list, or None.
+        sigma_limits       : The range of sigma values where the denoising process should be performed.
+                             Steps with sigmas outside this range will be ignored.
+                              Can be a tuple or list of two floats, or None if all steps should be processed.
+        sigma_step_range   : The range of steps to be processed. Steps outside this range will be ignored.
+                              Can be a tuple or list of two integers, or None if all steps should be processed.
         initial_noise_bias : An optional constant bias applied to the initial noise.
                               (where 0.0 = no bias; None = no bias)
                               Can be a tensor, scalar, or None.
@@ -354,8 +365,8 @@ def execute_3_stage_denoising(latent_image,
                               (where 0.0 = no-noise; 1.0 = standard deviation; None = standard deviation)
                               Can be a tensor, scalar, or None.
                               If tensor, it must have shape [batch_size, channels, 1, 1].
-        return_leftover_noise: If True, stops the sampler without clearing residual noise;
-                                useful for preserving noise state when chaining to another sampler.
+        force_final_denoise: If `True`, forces the final denoising step to zero out residual noise,
+                              use `False` (default) for chaining samplers to preserve noise for the next stage.
     Returns:
         A dictionary with the updated latent image data after all three denoising stages.
     """
@@ -368,30 +379,40 @@ def execute_3_stage_denoising(latent_image,
     if isinstance(sigmas3, list):
         sigmas3 = torch.tensor(sigmas3, device='cpu')
 
+    # truncate the sigmas to the specified range of steps. [start_step, end_step)
+    if isinstance(sigma_step_range, (list,tuple)):
+        i0 = 0
+        i1 = i0 + step_count(sigmas1)
+        i2 = i1 + step_count(sigmas2)
+        sigmas1 = truncate_sigmas_by_step_range(sigmas1, sigma_step_range, first_sigma_step=i0)
+        sigmas2 = truncate_sigmas_by_step_range(sigmas2, sigma_step_range, first_sigma_step=i1)
+        sigmas3 = truncate_sigmas_by_step_range(sigmas3, sigma_step_range, first_sigma_step=i2)
+
+    # truncate the sigmas to the specified range of values. [lower_value, upper_value]
     if isinstance(sigma_limits, (list,tuple)):
-        sigmas1 = truncate_sigmas(sigmas1, sigma_limits)
-        sigmas2 = truncate_sigmas(sigmas2, sigma_limits)
-        sigmas3 = truncate_sigmas(sigmas3, sigma_limits)
+        sigmas1 = truncate_sigmas_by_value_range(sigmas1, sigma_limits)
+        sigmas2 = truncate_sigmas_by_value_range(sigmas2, sigma_limits)
+        sigmas3 = truncate_sigmas_by_value_range(sigmas3, sigma_limits)
 
     # calculate the progress level for each step
     prog0 = 0
-    prog1 = prog0 + (sigmas1.shape[-1] - 1 if sigmas1 is not None else 0)
-    prog2 = prog1 + (sigmas2.shape[-1] - 1 if sigmas2 is not None else 0)
-    total = prog2 + (sigmas3.shape[-1] - 1 if sigmas3 is not None else 0)
+    prog1 = prog0 + step_count(sigmas1)
+    prog2 = prog1 + step_count(sigmas2)
+    total = prog2 + step_count(sigmas3)
 
 
 
     #-- THREE-STAGE PROCESS ---------------------------
     if sigmas1 is not None:
-        add_noise     = True
-        is_last_stage = sigmas2 is None and sigmas3 is None
+        add_noise = True
+        is_last_stage = (sigmas2 is None and sigmas3 is None)
         latent_image = execute_sampler(latent_image,
                         model, seed, cfg, positive, negative,
                         sampler             = sampler,
                         sigmas              = sigmas1,
                         noise_bias          = initial_noise_bias,
                         noise_scale         = initial_noise_scale if add_noise else 0.0,
-                        force_final_denoise = not (is_last_stage and return_leftover_noise),
+                        force_final_denoise = is_last_stage and force_final_denoise,
                         keep_masked_area    = True,
                         progress_preview    = ProgressPreview( prog1-prog0,
                                 parent=(progress_preview, 100*prog0//total, 100*prog1//total)),
@@ -399,20 +420,20 @@ def execute_3_stage_denoising(latent_image,
 
     if sigmas2 is not None:
         add_noise = False
-        is_last_stage = sigmas3 is None
+        is_last_stage = (sigmas3 is None)
         # normally this stage should NOT add noise (stage1 and stage2 must behave
         # as a single donoise process) but if no first stage was executed then
         # this stage is the first and therefore it must add noise
         if sigmas1 is None: add_noise = True
         latent_image = execute_sampler(latent_image,
                         model, seed, cfg, positive, negative,
-                        sampler            = sampler,
-                        sigmas             = sigmas2,
-                        noise_bias         = 0,
-                        noise_scale        = 1.0 if add_noise else 0.0,
-                        force_final_denoise = not (is_last_stage and return_leftover_noise),
-                        keep_masked_area   = True,
-                        progress_preview   = ProgressPreview( prog2-prog1,
+                        sampler             = sampler,
+                        sigmas              = sigmas2,
+                        noise_bias          = 0,
+                        noise_scale         = 1.0 if add_noise else 0.0,
+                        force_final_denoise = is_last_stage and force_final_denoise,
+                        keep_masked_area    = True,
+                        progress_preview    = ProgressPreview( prog2-prog1,
                                 parent=(progress_preview, 100*prog1//total, 100*prog2//total)),
                         )
 
@@ -425,7 +446,7 @@ def execute_3_stage_denoising(latent_image,
                         sigmas              = sigmas3,
                         noise_bias          = 0,
                         noise_scale         = 1.0 if add_noise else 0.0,
-                        force_final_denoise = not (is_last_stage and return_leftover_noise),
+                        force_final_denoise = is_last_stage and force_final_denoise,
                         keep_masked_area    = True,
                         progress_preview    = ProgressPreview( total-prog2,
                                 parent=(progress_preview, 100*prog2//total, 100*total//total)),
@@ -444,7 +465,7 @@ def execute_sampler(latent_image    : dict[str, Any],
                     sigmas          : list | torch.Tensor,
                     noise_bias      : torch.Tensor | float | int | None,
                     noise_scale     : torch.Tensor | float | int | None,
-                    force_final_denoise: bool = True,
+                    force_final_denoise: bool = False,
                     keep_masked_area   : bool = False,
                     fix_empty_latent   : bool = True,
                     progress_preview   : ProgressPreview | None = None,
@@ -471,8 +492,8 @@ def execute_sampler(latent_image    : dict[str, Any],
                            (where 0.0 = no-noise; 1.0 = standard deviation; None = standard deviation)
                            Can be a tensor, scalar, or None.
                            If tensor, it must have shape [batch_size, channels, 1, 1].
-        force_final_denoise: If `True` (default), forces a final denoising step to zero out residual noise;
-                              set to `False` when chaining samplers to preserve noise for the next stage.
+        force_final_denoise: If `True`, forces the final denoising step to zero out residual noise,
+                              use `False` (default) for chaining samplers to preserve noise for the next stage.
         keep_masked_area   : If True, the masked area of the latent image will be kept unchanged.
                               Comfyui tries to keep masked area unchanged when there's a mask active
                               but activating this flag we're sure that no change will happen at all.
@@ -552,18 +573,24 @@ def execute_sampler(latent_image    : dict[str, Any],
     disable_pbar = not comfy.utils.PROGRESS_BAR_ENABLED
 
     if force_final_denoise:
-        samples = comfy.sample.sample_custom(model, noise, cfg, sampler, sigmas, positive, negative,
-                                             samples, noise_mask=noise_mask, callback=progress_wrapper,
-                                             disable_pbar=disable_pbar, seed=noise_seed)
-    else:
-        # in this lengthy comfyui function, the `steps` parameter is ignored if `sigmas` is provided.
-        # although this function can be used with "force_final_denoise=True", due to the numerous
-        # parameters that are not used by me, I prefer to call this function as little as possible.
-        samples = comfy.sample.sample(model, noise, steps, cfg, "euler", scheduler=None, sigmas=sigmas,
-                                      positive=positive, negative=negative, latent_image=samples,
-                                      denoise=1.0, start_step=0, last_step=100,
-                                      force_full_denoise=force_final_denoise, noise_mask=noise_mask, callback=progress_wrapper,
-                                      disable_pbar=disable_pbar, seed=noise_seed)
+        sigmas[-1] = 0
+    samples = comfy.sample.sample_custom(model, noise, cfg, sampler, sigmas, positive, negative,
+                                         samples, noise_mask=noise_mask, callback=progress_wrapper,
+                                         disable_pbar=disable_pbar, seed=noise_seed)
+
+    # if force_final_denoise:
+    #     samples = comfy.sample.sample_custom(model, noise, cfg, sampler, sigmas, positive, negative,
+    #                                          samples, noise_mask=noise_mask, callback=progress_wrapper,
+    #                                          disable_pbar=disable_pbar, seed=noise_seed)
+    # else:
+    #     # in this lengthy comfyui function, the `steps` parameter is ignored if `sigmas` is provided.
+    #     # although this function can be used with "force_final_denoise=True", due to the numerous
+    #     # parameters that are not used by me, I prefer to call this function as little as possible.
+    #     samples = comfy.sample.sample(model, noise, steps, cfg, "euler", scheduler=None, sigmas=sigmas,
+    #                                   positive=positive, negative=negative, latent_image=samples,
+    #                                   denoise=1.0, start_step=0, last_step=100,
+    #                                   force_full_denoise=force_final_denoise, noise_mask=noise_mask, callback=progress_wrapper,
+    #                                   disable_pbar=disable_pbar, seed=noise_seed)
 
 
     # when there's an inpainting mask, it seems like comfyui does not merge the
@@ -713,10 +740,11 @@ def estimate_initial_noise_features(latent_image,
     # run the sampler on pure noise and calculate the mean of the result
     latent_image = execute_sampler(latent_image,
                                    model, seed, 1.0, positive, negative,
-                                   sampler          = sampler,
-                                   sigmas           = sigmas,
-                                   noise_bias       = sample_bias,
-                                   noise_scale      = sample_scale,
+                                   sampler             = sampler,
+                                   sigmas              = sigmas,
+                                   noise_bias          = sample_bias,
+                                   noise_scale         = sample_scale,
+                                   force_final_denoise = False,
                                    progress_preview = ProgressPreview( steps,
                                         parent=(progress_preview, 0, 100)),
                                    )
@@ -732,9 +760,37 @@ def estimate_initial_noise_features(latent_image,
 
 #============================ SIGMA OPERATIONS =============================#
 
-def truncate_sigmas(sigmas : torch.Tensor | None,
-                    limits : list[float] | tuple[float,float] | None,
-                    ) -> torch.Tensor | None:
+def truncate_sigmas_by_step_range(sigmas    : torch.Tensor | None,
+                                  step_range: tuple[int,int] | list[int] | None,
+                                  *,
+                                  first_sigma_step: int = 0,
+                                  ) -> torch.Tensor | None:
+    """
+    Truncate sigmas tensor based on step range.
+
+    Args:
+        sigmas          : Tensor of sigma values.
+        step_range      : Tuple or list of (start_step, end_step) inclusive-exclusive.
+        first_sigma_step: The step number of the first sigma value in the tensor.
+
+    Returns:
+        Truncated sigmas tensor, or None if sigmas is invalid.
+    """
+    if sigmas is None or sigmas.numel() <= 1:
+        return None
+    if not isinstance(step_range, (list, tuple)) or len(step_range) < 2:
+        return sigmas
+
+    start_step = max(0,step_range[0]) - first_sigma_step  # first step (inclusive)
+    end_step   = max(0,step_range[1]) - first_sigma_step  # last step (exclusive)
+    if start_step >= end_step:
+        return None
+    return sigmas[start_step:end_step + 1]
+
+
+def truncate_sigmas_by_value_range(sigmas      : torch.Tensor | None,
+                                   value_range : list[float] | tuple[float,float] | None,
+                                   ) -> torch.Tensor | None:
     """
     Truncates a *descending* tensor of sigmas inside a restricted range.
 
@@ -758,17 +814,19 @@ def truncate_sigmas(sigmas : torch.Tensor | None,
         If `sigmas` is `None` the function returns `None`.
         If `sigmas` is totally outside the limits, the function returns `None`.
     """
-    if sigmas is None or sigmas.numel()==0:
+    
+    if sigmas is None or sigmas.numel()<=1:
         return None
-    if limits is None:
+
+    if value_range is None:
         return sigmas
-    if not isinstance(limits, (list, tuple)) or len(limits) < 2:
+    if not isinstance(value_range, (list, tuple)) or len(value_range) < 2:
         raise ValueError("`limits` must be a list or tuple with at least 2 elements")
     if not (sigmas[0] >= sigmas[-1]):
         raise ValueError("`sigmas` must be sorted in descending order")
 
     # extract the lower and upper limits
-    lower, upper = limits[0], limits[1]
+    lower, upper = value_range[0], value_range[1]
     if lower > upper:
         lower, upper = upper, lower
 
