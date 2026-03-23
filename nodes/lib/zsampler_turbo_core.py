@@ -20,15 +20,6 @@ from typing         import Any
 from .progress_bar  import ProgressPreview
 
 
-    #elif steps>=9:
-    #    sigmas1 = [0.990, 0.981, 0.911]                #< 2 steps
-    #    sigmas2 = [0.943, 0.850, 0.775, 0.640, 0.000]  #< 4 steps (=6 generation steps)
-    #    sigmas3 = [0.608, 0.486, 0.270, 0.000]         #< 3 steps (+3 refiner steps)
-
-    #elif steps>=9:
-    #    sigmas1 = [0.990, 0.980, 0.913]                #< 2 steps
-    #    sigmas2 = [0.941, 0.858, 0.725, 0.540, 0.000]  #< 4 steps (=6 generation steps)
-    #    sigmas3 = [0.708, 0.586, 0.270, 0.000]         #< 3 steps (+3 refiner steps)
 
 ALPHA_SIGMA_PRESET = (
     (
@@ -62,7 +53,6 @@ ALPHA_SIGMA_PRESET = (
         [0.6582, 0.4556, 0.2000, 0.0000],      #< +3 steps
     )
 )
-
 BRAVO_SIGMA_PRESET = (
     (   [0.992, 0.977, 0.917],                #< 2 steps
         [0.948, 0.000],                       #< 1 step  (=3 generation steps)
@@ -93,6 +83,20 @@ BRAVO_SIGMA_PRESET = (
         [0.708, 0.586, 0.270, 0.000],         #< 3 steps (+3 refiner steps)
     )
 )
+# C_SIGMA_PRESET = (
+#     (
+#         [0.990, 0.981, 0.911],                #< 2 steps
+#         [0.943, 0.850, 0.775, 0.640, 0.000],  #< 4 steps (=6 generation steps)
+#         [0.608, 0.486, 0.270, 0.000],         #< 3 steps (+3 refiner steps)
+#     )
+# )
+# D_SIGMA_PRESET = (
+#     (
+#         [0.990, 0.980, 0.913],                #< 2 steps
+#         [0.941, 0.858, 0.725, 0.540, 0.000],  #< 4 steps (=6 generation steps)
+#         [0.708, 0.586, 0.270, 0.000],         #< 3 steps (+3 refiner steps)
+#     )
+# )
 SIGMA_PRESETS_BY_NAME = {
     "alpha"  : ALPHA_SIGMA_PRESET,
     "bravo"  : BRAVO_SIGMA_PRESET,
@@ -105,18 +109,18 @@ def zsampler_turbo_core(latent_input             : dict[str, Any],
                         *,
                         seed                     : int,
                         steps                    : int,
-                        initial_noise_bias_level : float,
-                        initial_noise_scale_level: float,
+                        initial_noise_bias_level : float              = 0.0,
                         initial_noise_overdose   : float              = 0.0,
                         noise_est_sample_size    : str | int | None   = None,
                         noise_est_sample_bias    : float              = 0.0,
-                        noise_est_sample_scale   : float              = 0.1,
+                        noise_est_sample_scale   : float              = 1.0,
                         sigma_preset_name        : str | None         = None,
                         sigma_offsets            : list[float] | None = None,
                         sigma_limits             : tuple[float,float] | list[float] | None = None,
                         sigma_step_range         : tuple[int,int] | list[int] | None       = None,
-                        start_with_noise         : bool = True,
-                        end_with_denoise         : bool = True,
+                        start_with_noise         : bool               = True,
+                        end_with_denoise         : bool               = True,
+                        positive_stg1            : list | None        = None,
                         progress_preview         : ProgressPreview
                         ) -> dict[str, Any]:
     """
@@ -129,25 +133,22 @@ def zsampler_turbo_core(latent_input             : dict[str, Any],
         seed                     : The seed used for random number generation.
         steps                    : The total number of denoising steps. This value will
                                     be used internally to determine the sigmas values.
+        initial_noise_bias_level : The level of adjustament from the calculated noise bias to
+                                    apply before the first denoising step.
+                                    0.0 = no noise bias adjustment;
+                                    1.0 = using the 100% calculated noise bias
+        initial_noise_overdose    : The level of over-amplitude in the initial noise scale.
+                                    0.0 = default noise scale;
+                                    positive values will increase the noise scale, e.g: 0.1 = 10% increment;
+                                    negative values will reduce the noise scale, e.g: -0.1 = 10% decrement.
         noise_est_sample_size    : Size in pixels of the sample for initial noise estimation.
                                     A string can be used to specify the size in pixels, e.g: "512px".
                                     If `None`, the size of the latent input will be used.
         noise_est_sample_bias    : The bias of the pure noise used in the initial noise estimation,
         noise_est_sample_scale   : The scale of the pure noise used in the initial noise estimation.,
-        initial_noise_bias_level : The level of adjustament from the calculated noise bias to
-                                    apply before the first denoising step.
-                                    0.0 = no noise bias adjustment;
-                                    1.0 = using the 100% calculated noise bias
-        initial_noise_scale_level: The level of adjustament from the calculated noise scale to
-                                    apply before the first denoising step.
-                                    0.0 = no noise scale adjustment;
-                                    1.0 = using the 100% calculated noise scale.
-        noise_overdose           : The level of over-amplitude in the initial noise scale.
-                                    0.0 = default noise scale;
-                                    positive values will increase the noise scale, e.g: 0.1 = 10% increment;
-                                    negative values will reduce the noise scale, e.g: -0.1 = 10% decrement.
         sigma_offsets            : Optional list of offsets to be added to the calculated sigma values.
         sigma_limits             : Optional tuple with minimum and maximum limits for sigma values.
+        sigma_step_range         : Optional tuple with the range of steps that will actually be performed.
         start_with_noise         : If `True` (default), begins the denoising process by injecting noise.
                                     Set to `False` to preserve noise from a previous process (chaining samplers).
         end_with_denoise         : If `True` (default), ends the denoising process by zeroing out residual noise.
@@ -161,6 +162,11 @@ def zsampler_turbo_core(latent_input             : dict[str, Any],
     # only "euler" sampler has been tested with this technique
     sampler_name = "euler"
     sampler = comfy.samplers.sampler_object(sampler_name)
+
+    # z-image turbo is a cfg-distilled model requiring CFG=1.0, which discard
+    # negative conditioning, here we set it to `positive` for simplicity
+    negative = positive
+
 
     # validate sigma_limits & sigma_step_range
     if sigma_limits is not None:
@@ -259,13 +265,6 @@ def zsampler_turbo_core(latent_input             : dict[str, Any],
     else:
         sample_size = None
 
-    # this parameter controls whether the estimated initial noise
-    # features (bias and scale) are automatically normalized:
-    # - if `True`, the noise bias is adjusted based on the scale,
-    #   and the scale is set to 1.0, which is the preferred method.
-    # - if `False`, both the bias and scale are manually adjusted
-    #   by dividing them by 100, which is an older and ugly approach.
-    normalize_noise_features = True
 
     # estimate the initial noise features (bias & scale):
     # these parameters can be thought of as modifying the brightness and contrast
@@ -277,9 +276,9 @@ def zsampler_turbo_core(latent_input             : dict[str, Any],
     # the initial noise scale controls the amplitude of the noise.
     # (they are only calculated if the generation starts from pure noise and
     #  if the user has specified a non-zero level for either parameter)
-    initial_noise_bias  = 0
-    initial_noise_scale = 1
-    if start_from_pure_noise and (initial_noise_bias_level != 0 or initial_noise_scale_level != 0):
+    initial_noise_bias  = 0.0
+    initial_noise_scale = 1.0 + initial_noise_overdose
+    if start_from_pure_noise and (initial_noise_bias_level != 0):
         bias, scale = estimate_initial_noise_features(
                                 latent_input, model, seed, positive, positive,
                                 sampler      = sampler,
@@ -289,21 +288,18 @@ def zsampler_turbo_core(latent_input             : dict[str, Any],
                                 sample_scale = noise_est_sample_scale,
                                 progress_preview = ProgressPreview( 100, parent=(progress_preview,0,100//steps) ),
                                 )
-        if normalize_noise_features:
-            initial_noise_bias  = (bias / scale * initial_noise_bias_level)
-            initial_noise_scale = 1.0 * initial_noise_scale_level
-        else:
-            initial_noise_bias  = (bias  / 100 * initial_noise_bias_level)
-            initial_noise_scale = (scale / 100 * initial_noise_scale_level) + (1-initial_noise_scale_level)
+        initial_noise_bias  = (bias / scale * initial_noise_bias_level)
+        #-- OLD MTHOD ---------
+        # initial_noise_bias  = (bias  / 100 * initial_noise_bias_level)
+        # initial_noise_scale = (scale / 100 * initial_noise_scale_level) + (1-initial_noise_scale_level)
+        # if initial_noise_overdose:
+        #    initial_noise_scale *= 1+initial_noise_overdose if initial_noise_overdose>=0 else 1/(1-initial_noise_overdose)
 
-
-    # applies the noise overdose if it was required
-    if initial_noise_overdose:
-        initial_noise_scale *= 1+initial_noise_overdose if initial_noise_overdose>=0 else 1/(1-initial_noise_overdose)
 
     # execute the 3-stage denoising process
     latent_output = execute_3_stage_denoising(latent_input,
-                                              model, seed, 1.0, positive, positive,
+                                              model, seed, 1.0, positive, negative,
+                                              positive_stg1        = positive_stg1,
                                               sampler              = sampler,
                                               sigmas1              = sigmas1,
                                               sigmas2              = sigmas2,
@@ -354,6 +350,7 @@ def execute_3_stage_denoising(latent_image,
                               initial_noise_scale : torch.Tensor | float | int | None       = 1.0,
                               start_with_noise    : bool = True,
                               end_with_denoise    : bool = True,
+                              positive_stg1       : list | None,
                               progress_preview    : ProgressPreview,
                               ):
     """
@@ -393,6 +390,10 @@ def execute_3_stage_denoising(latent_image,
     Returns:
         A dictionary with the updated latent image data after all three denoising stages.
     """
+    # the stage1 positive conditioning is optional,
+    # if not provided, it will be the same as the main positive
+    if positive_stg1 is None:
+        positive_stg1 = positive
 
     # if sigmas is a list then convert it to pytorch tensor
     if isinstance(sigmas1, list):
@@ -441,7 +442,7 @@ def execute_3_stage_denoising(latent_image,
         force_denoise = (is_last_stage  and end_with_denoise)
 
         latent_image = execute_sampler(latent_image,
-                        model, seed, cfg, positive, negative,
+                        model, seed, cfg, positive_stg1, negative,
                         sampler             = sampler,
                         sigmas              = sigmas1,
                         noise_bias          = initial_noise_bias  if add_noise else 0,
@@ -780,7 +781,7 @@ def estimate_initial_noise_features(latent_image,
     scale = samples.std (dim=[2, 3], keepdim=True)
 
     # TODO: check clamp range
-    bias.clamp_(min=-1.0, max=1.0)
+    #bias.clamp_(min=-100.0, max=2.5)
     return bias, scale
 
 
