@@ -42,11 +42,14 @@ ALPHA_SIGMA_PRESET = (
         [0.991, 0.980, 0.920],                 #< +2 steps
         [0.9350, 0.8916, 0.7600, 0.0000],      #< +3 steps
         [0.6582, 0.3019, 0.0000],              #< +2 steps
-
+    # ),(
+    #     [0.991, 0.980, 0.920],                 #< +2 steps
+    #     [0.935, 0.90, 0.875, 0.750, 0.0000],   #< +4 steps
+    #     [0.6582, 0.3019, 0.0000],              #< +2 steps
     ),(
-        [0.991, 0.980, 0.920],                 #< +2 steps
+        [0.991, 0.920],                        #< +2 steps
         [0.935, 0.90, 0.875, 0.750, 0.0000],   #< +4 steps
-        [0.6582, 0.3019, 0.0000],              #< +2 steps
+        [0.6582, 0.4556, 0.2000, 0.0000],      #< +3 steps
     ),(
         [0.991, 0.980, 0.920],                 #< +2 steps
         [0.935, 0.90, 0.875, 0.750, 0.0000],   #< +4 steps
@@ -54,43 +57,76 @@ ALPHA_SIGMA_PRESET = (
     )
 )
 BRAVO_SIGMA_PRESET = (
-    (   [0.992, 0.977, 0.917],                #< 2 steps
-        [0.948, 0.000],                       #< 1 step  (=3 generation steps)
-        None,                                 #< (no refiner)
+    (
+        [0.991, 0.920],                             #< +1 steps
+        [0.942, 0.000],                             #< +1 steps | = 2 generation steps
+        [0.710, 0.000],                             #< +1 steps | + 1 refiner step
     ),(
-        [0.992, 0.977, 0.917],                #< 2 steps
-        [0.948, 0.000],                       #< 1 step  (=3 generation steps)
-        [0.700, 0.000],                       #< 1 step  (+1 refiner step)
+        [0.991, 0.920],                             #< +1 steps
+        [0.935, 0.789, 0.000],                      #< +2 steps | = 3 generation steps
+        [0.500, 0.000],                             #< +1 steps | + 1 refiner step
     ),(
-        [0.992, 0.977, 0.917],                #< 2 steps
-        [0.948, 0.740, 0.000],                #< 2 steps (=4 generation steps)
-        [0.700, 0.000],                       #< 1 step  (+1 refiner step)
+        [0.991, 0.920],                             #< +1 steps
+        [0.935, 0.770, 0.690, 0.000],               #< +4 steps | = 4 generation steps
+        [0.280, 0.000],                             #< +1 step  | + 1 refiner step
     ),(
-        [0.992, 0.977, 0.917],                #< 2 steps
-        [0.948, 0.828, 0.570, 0.000],         #< 3 steps (=5 generation steps)
-        [0.700, 0.000],                       #< 1 step  (+1 refiner step)
+        [0.991, 0.920],                             #< +1 steps
+        [0.935, 0.770, 0.690, 0.000],               #< +3 steps | = 4 generation steps
+        [0.658, 0.302, 0.000],                      #< +2 steps | + 2 refiner step
     ),(
-        [0.992, 0.977, 0.917],                #< 2 steps
-        [0.948, 0.828, 0.570, 0.000],         #< 3 steps (=5 generation steps)
-        [0.700, 0.280, 0.000],                #< 2 steps (+2 refiner steps)
+        [0.991, 0.920],                             #< +1 steps
+        [0.935, 0.900, 0.875, 0.800, 0.000],        #< +4 steps | = 5 generation steps
+        [0.658, 0.302, 0.000],                      #< +2 steps | + 2 refiner step
     ),(
-        [0.992, 0.977, 0.917],                #< 2 steps
-        [0.948, 0.858, 0.725, 0.540, 0.000],  #< 4 steps (=6 generation steps)
-        [0.700, 0.280, 0.000],                #< 2 steps (+2 refiner steps)
+        [0.991, 0.920],                             #< +1 steps
+        [0.935, 0.900, 0.875, 0.820, 0.750, 0.000], #< +5 steps | = 6 generation steps
+        [0.658, 0.302, 0.000],                      #< +2 steps | + 2 refiner step
     ),(
-        [0.992, 0.977, 0.917],                #< 2 steps
-        [0.948, 0.858, 0.725, 0.540, 0.000],  #< 4 steps (=6 generation steps)
-        [0.708, 0.586, 0.270, 0.000],         #< 3 steps (+3 refiner steps)
+        [0.991, 0.920],                             #< +1 steps
+        [0.935, 0.900, 0.875, 0.820, 0.750, 0.000], #< +5 steps | = 6 generation steps
+        [0.658, 0.4556, 0.200, 0.000],              #< +3 steps | + 3 refiner step
     )
 )
+
 # C_SIGMA_PRESET = (
+#     (   [0.992, 0.977, 0.917],                #< 2 steps
+#         [0.948, 0.000],                       #< 1 step  (=3 generation steps)
+#         None,                                 #< (no refiner)
+#     ),(
+#         [0.992, 0.977, 0.917],                #< 2 steps
+#         [0.948, 0.000],                       #< 1 step  (=3 generation steps)
+#         [0.700, 0.000],                       #< 1 step  (+1 refiner step)
+#     ),(
+#         [0.992, 0.977, 0.917],                #< 2 steps
+#         [0.948, 0.740, 0.000],                #< 2 steps (=4 generation steps)
+#         [0.700, 0.000],                       #< 1 step  (+1 refiner step)
+#     ),(
+#         [0.992, 0.977, 0.917],                #< 2 steps
+#         [0.948, 0.828, 0.570, 0.000],         #< 3 steps (=5 generation steps)
+#         [0.700, 0.000],                       #< 1 step  (+1 refiner step)
+#     ),(
+#         [0.992, 0.977, 0.917],                #< 2 steps
+#         [0.948, 0.828, 0.570, 0.000],         #< 3 steps (=5 generation steps)
+#         [0.700, 0.280, 0.000],                #< 2 steps (+2 refiner steps)
+#     ),(
+#         [0.992, 0.977, 0.917],                #< 2 steps
+#         [0.948, 0.858, 0.725, 0.540, 0.000],  #< 4 steps (=6 generation steps)
+#         [0.700, 0.280, 0.000],                #< 2 steps (+2 refiner steps)
+#     ),(
+#         [0.992, 0.977, 0.917],                #< 2 steps
+#         [0.948, 0.858, 0.725, 0.540, 0.000],  #< 4 steps (=6 generation steps)
+#         [0.708, 0.586, 0.270, 0.000],         #< 3 steps (+3 refiner steps)
+#     )
+#)
+
+# D_SIGMA_PRESET = (
 #     (
 #         [0.990, 0.981, 0.911],                #< 2 steps
 #         [0.943, 0.850, 0.775, 0.640, 0.000],  #< 4 steps (=6 generation steps)
 #         [0.608, 0.486, 0.270, 0.000],         #< 3 steps (+3 refiner steps)
 #     )
 # )
-# D_SIGMA_PRESET = (
+# E_SIGMA_PRESET = (
 #     (
 #         [0.990, 0.980, 0.913],                #< 2 steps
 #         [0.941, 0.858, 0.725, 0.540, 0.000],  #< 4 steps (=6 generation steps)
@@ -781,7 +817,7 @@ def estimate_initial_noise_features(latent_image,
     scale = samples.std (dim=[2, 3], keepdim=True)
 
     # TODO: check clamp range
-    #bias.clamp_(min=-100.0, max=2.5)
+    #bias.clamp_(min=-4.5, max=4.5)
     return bias, scale
 
 

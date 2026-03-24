@@ -117,7 +117,7 @@ class ZSamplerTurbo2(io.ComfyNode):
                                             initial_noise_bias_level  = initial_noise_bias_level,
                                             initial_noise_overdose    = initial_noise_overdose,
                                             noise_est_sample_size     = 512 if use_lowres_sample else "image_size",
-                                            sigma_preset_name         = "alpha",
+                                            sigma_preset_name         = "bravo",
                                             sigma_limits              = sigma_limits,
                                             progress_preview = ProgressPreview.from_model( model ),
                                             )
