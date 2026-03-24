@@ -45,14 +45,22 @@ class ZSamplerTurbo2Advanced(io.ComfyNode):
                 'and produces a denoised output ready for further processing or decoding.'
             ),
             inputs=[
+                io.Latent.Input      ("latent_input",
+                                      tooltip="The initial latent image to be modified; typically an 'Empty Latent' for text-to-image or an encoded image for img2img.",
+                                     ),
                 io.Model.Input       ("model",
                                       tooltip="The model used for generating the latent images.",
                                      ),
                 io.Conditioning.Input("positive",
                                       tooltip="The conditioning used to guide the generation process toward the desired content.",
                                      ),
-                io.Latent.Input      ("latent_input",
-                                      tooltip="The initial latent image to be modified; typically an 'Empty Latent' for text-to-image or an encoded image for img2img.",
+                io.Conditioning.Input("positive_stg2", optional=True,
+                                      tooltip="This input is optional and can remain disconennect. It allows defining "
+                                              "a different conditioning for the second stage of the denoising process.",
+                                     ),
+                io.Conditioning.Input("positive_stg3", optional=True,
+                                      tooltip="This input is optional and can remain disconennect. It allows defining "
+                                              "a different conditioning for the third stage of the denoising process.",
                                      ),
                 io.Boolean.Input     ("add_noise", default=True, label_on="yes", label_off="no",
                                       tooltip="???",
@@ -104,9 +112,9 @@ class ZSamplerTurbo2Advanced(io.ComfyNode):
     #__ FUNCTION __________________________________________
     @classmethod
     def execute(cls,
-                model,
-                positive              : list,
                 latent_input          : dict[str, Any],
+                model                 : Any,
+                positive              : list,
                 add_noise             : bool,
                 seed                  : int,
                 steps                 : int,
@@ -116,6 +124,8 @@ class ZSamplerTurbo2Advanced(io.ComfyNode):
                 intensity_shift       : float,
                 initial_bias_level    : float,
                 initial_sample_size   : str,
+                positive_stg2         : list | None = None,
+                positive_stg3         : list | None = None,
                 **kwargs
                 ) -> io.NodeOutput:
 
@@ -130,6 +140,8 @@ class ZSamplerTurbo2Advanced(io.ComfyNode):
 
         # run the Z-Sampler Turbo core method on the latent image
         latent_output = zsampler_turbo_core(latent_input, model, positive,
+                                            positive_stg2             = positive_stg2,
+                                            positive_stg3             = positive_stg3,
                                             seed                      = seed,
                                             steps                     = steps,
                                             initial_noise_bias_level  = initial_bias_level,
