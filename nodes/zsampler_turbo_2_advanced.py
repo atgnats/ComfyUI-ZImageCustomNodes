@@ -26,7 +26,7 @@ def Divider(id: str):
 
 
 class ZSamplerTurbo2Advanced(io.ComfyNode):
-    xTITLE         = "Z-Sampler Turbo :geN2 (Advanced)"
+    xTITLE         = "Z-Sampler Turbo ^2 (Advanced)"
     xCATEGORY      = ""
     xCOMFY_NODE_ID = ""
     xDEPRECATED    = False
@@ -40,56 +40,66 @@ class ZSamplerTurbo2Advanced(io.ComfyNode):
             node_id       = cls.xCOMFY_NODE_ID,
             is_deprecated = cls.xDEPRECATED,
             description   = (
-                'Efficiently denoises latent images, specifically tuned for the "Z-Image Turbo" model. '
-                'This node takes a Z-Image Turbo model, an initial latent image, and conditioning parameters, '
-                'and produces a denoised output ready for further processing or decoding.'
+                'Efficiently denoises the latent image using a process specifically tuned for the "Z-Image Turbo". '
+                'This node takes a Z-Image Turbo model, an initial latent image, and conditioning parameters, and '
+                'produces a denoised latent output ready for decoding into the final image. This advanced version '
+                'includes extra parameters for more precise control and chaining of samplers.'
             ),
             inputs=[
                 io.Latent.Input      ("latent_input",
-                                      tooltip="The initial latent image to be modified; typically an 'Empty Latent' for text-to-image or an encoded image for img2img.",
+                                      tooltip="The initial latent image to be modified; typically an 'Empty Latent' "
+                                              "for text-to-image or an encoded image for img2img. ",
                                      ),
                 io.Model.Input       ("model",
-                                      tooltip="The model used for generating the latent images.",
+                                      tooltip="The Z-Image Turbo model used for denoising the latent image. "
                                      ),
                 io.Conditioning.Input("positive",
-                                      tooltip="The conditioning used to guide the generation process toward the desired content.",
+                                      tooltip="The main conditioning used to guide the generation process toward "
+                                              "the desired content. ",
                                      ),
                 io.Conditioning.Input("positive_stg2", optional=True,
                                       tooltip="This input is optional and can remain disconennect. It allows defining "
-                                              "a different conditioning for the second stage of the denoising process.",
+                                              "a different conditioning for the second stage of the denoising process. ",
                                      ),
                 io.Conditioning.Input("positive_stg3", optional=True,
                                       tooltip="This input is optional and can remain disconennect. It allows defining "
-                                              "a different conditioning for the third stage of the denoising process.",
+                                              "a different conditioning for the third stage of the denoising process. ",
                                      ),
                 io.Boolean.Input     ("add_noise", default=True, label_on="yes", label_off="no",
-                                      tooltip="???",
+                                     tooltip="Determines whether to add initial noise to the latent image. Recommended "
+                                             "for most cases. Disabling this is useful for sampler chaining when the "
+                                             "input latent already contains residual noise from a previous process. ",
                                      ),
                 io.Int.Input         ("seed", default=1, min=1, max=0xffffffffffffffff, control_after_generate=True,
-                                      tooltip="The seed used for the random noise generator, ensuring the same result is produced with the same value.",
+                                      tooltip="The seed used for the random noise generator, ensuring the same result "
+                                              "is produced with the same value.",
                                      ),
                 io.Int.Input         ("steps", default=8, min=3, max=20, step=1,
-                                      tooltip="The number of iterations to be performed during the sampling process.",
+                                      tooltip="The number of iterations to be performed during the denoising process.",
                                      ),
                 io.Int.Input         ("start_at_step", default=0, min=0, max=100, step=1,
-                                      tooltip="The number of iterations to be performed during the sampling process.",
-                                     ),
+                                      tooltip="The step at which the sampling process should start, allowing for more "
+                                              "precise control over the denoising process and enabling sampler chaining. ",
+                                      ),
                 io.Int.Input         ("end_at_step", default=100, min=0, max=100, step=1,
-                                      tooltip="The number of iterations to be performed during the sampling process.",
+                                      tooltip="The step at which the sampling process should end. allowing for more "
+                                              "precise control over the denoising process and enabling sampler chaining. ",
                                      ),
                 io.Boolean.Input     ("force_final_denoising", default=True, label_on="yes", label_off="no",
-                                      tooltip="???",
+                                      tooltip="Determines whether to force a full final denoising step, resulting in "
+                                              "a output latent with no residual noise. Recommended for most cases. "
+                                              "Disabling this is useful when residual noise is required for the next "
+                                              "process in a sampler chain. ",
                                      ),
 
                 Divider("divider"),#=========================================
 
-                io.Float.Input       ("vibrance", default=0.0, min=-1.0, max=1.0, step=0.1,
+                io.Float.Input       ("z_vibrance", default=0.0, min=-1.0, max=1.0, step=0.1,
                                       tooltip="The amount of over-amplitude in the initial noise to generate images with "
                                               "more pronounced contrasts and colors. 0.0 means no correction is applied. "
                                               "Negative values result in more washed-out images, while positive values "
-                                              "enhance details and vibrancy. "
-                                              "This parameter only affects the image when 'start_at_step' is set to 0 "
-                                              "and 'add_noise' is enabled. ",
+                                              "enhance intensity and saturation. This parameter only affects the image "
+                                              "when 'start_at_step' is set to 0 and 'add_noise' is enabled. ",
                                      ),
                 io.Float.Input       ("initial_bias_level", default=1.5, min=0.0, max=2.0, step=0.1,
                                       tooltip="The level of adjustament from the estimated noise bias to apply before "
@@ -105,7 +115,10 @@ class ZSamplerTurbo2Advanced(io.ComfyNode):
 
             ],
             outputs=[
-                io.Latent.Output(display_name="latent_output", tooltip="The resulting denoised latent image, ready to be decoded by a VAE or passed to another sampler."),
+                io.Latent.Output(display_name="latent_output",
+                                 tooltip="The resulting denoised latent image, ready to be decoded "
+                                         "by a VAE or passed to another node for further processing. ",
+                                )
             ]
         )
 
@@ -121,7 +134,7 @@ class ZSamplerTurbo2Advanced(io.ComfyNode):
                 start_at_step         : int,
                 end_at_step           : int,
                 force_final_denoising : bool,
-                intensity_shift       : float,
+                z_vibrance            : float,
                 initial_bias_level    : float,
                 initial_sample_size   : str,
                 positive_stg2         : list | None = None,
@@ -129,8 +142,8 @@ class ZSamplerTurbo2Advanced(io.ComfyNode):
                 **kwargs
                 ) -> io.NodeOutput:
 
-        # calculate amount of noise overdose based on the `vibrance_adjustment`
-        initial_noise_overdose = (0.2 * ((intensity_shift+1)**2) + 0.8) - 1
+        # calculate the amount of noise overdose based on `z_vibrance`
+        initial_noise_overdose = (0.2 * ((z_vibrance+1)**2) + 0.8) - 1
 
         # if the start/stop values restrict the number of steps,
         # apply that start/stop range using the `sigma_step_range` parameter

@@ -23,7 +23,7 @@ from .lib.zsampler_turbo_legacy_core import zsampler_turbo_legacy_core
 
 
 class ZSamplerTurbo(io.ComfyNode):
-    xTITLE         = "Z-Sampler Turbo :geN1"
+    xTITLE         = "Z-Sampler Turbo ^1"
     xCATEGORY      = ""
     xCOMFY_NODE_ID = ""
     xDEPRECATED    = False
