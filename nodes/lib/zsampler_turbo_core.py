@@ -11,6 +11,7 @@ License : MIT
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 """
 import torch
+import torch.nn.functional as F
 import numpy as np
 import comfy.utils
 import comfy.sample
@@ -22,7 +23,7 @@ from .progress_bar  import ProgressPreview
 
 def zsampler_turbo_core(latent_input             : dict[str, Any],
                         model                    : Any,
-                        positive                 : list,
+                        positive                 : list[ tuple[torch.Tensor,dict] ],
                         *,
                         seed                     : int,
                         steps                    : int,
@@ -35,10 +36,12 @@ def zsampler_turbo_core(latent_input             : dict[str, Any],
                         sigma_offsets            : list[float] | None = None,
                         sigma_limits             : tuple[float,float] | list[float] | None = None,
                         sigma_step_range         : tuple[int,int] | list[int] | None       = None,
-                        start_with_noise         : bool               = True,
-                        end_with_denoise         : bool               = True,
-                        positive_stg2            : list | None        = None,
-                        positive_stg3            : list | None        = None,
+                        start_with_noise         : bool                                    = True,
+                        end_with_denoise         : bool                                    = True,
+                        positive_stg2            : list[ tuple[torch.Tensor,dict] ] | None = None,
+                        positive_stg3            : list[ tuple[torch.Tensor,dict] ] | None = None,
+                        inject_noise_scales      : tuple[float,float,float] | None         = None,
+                        inject_noise_freqs       : tuple[int  ,int  ,int  ] | None         = None,
                         progress_preview         : ProgressPreview
                         ) -> dict[str, Any]:
     """
@@ -75,11 +78,33 @@ def zsampler_turbo_core(latent_input             : dict[str, Any],
                                     If `None` (default), the main positive conditioning will be used.
         positive_stg3            : Optional positive conditioning to be used in the third stage.
                                     If `None` (default), the main positive conditioning will be used.
+        inject_noise_scales      : Optional scales of the extra noise injected into the latent image in each stage.
+                                    If `None` (default), no extra noise will be injected.
+        inject_noise_freqs       : Optional frequencies at which additional noise is injected into the latent image
+                                    during each stage. These frequencies determine the granularity of noise injection.
+                                    For example, a value of 1024 means noise is injected into every pixel, while a
+                                    value of 512 means noise is injected every second pixel, with intermediate pixels
+                                    being interpolated. Lower frequency values result in smoother noise transitions
+                                    across the image.
         progress_preview         : A `ProgressPreview` object for displaying progress during the denoising process.
 
     Returns:
         A dict with the denoised latent output.
     """
+
+    # force inject_nise_scales to be a tuple of 3 elements or `None``
+    if isinstance(inject_noise_scales, (tuple,list)):
+        DEFAULTS = (0.0, 0.0, 0.0)
+        inject_noise_scales = (*inject_noise_scales, *DEFAULTS[len(inject_noise_scales):])[:3]
+    else:
+        inject_noise_scales = None
+
+    # force inject_noise_freqs to be a tuple of 3 elements or `None`
+    if isinstance(inject_noise_freqs, (tuple,list)):
+        DEFAULTS = (32,64,512)
+        inject_noise_freqs = (*inject_noise_freqs, *DEFAULTS[len(inject_noise_freqs):])[:3]
+    else:
+        inject_noise_freqs = None
 
     # only "euler" sampler has been tested with this technique
     sampler_name = "euler"
@@ -233,6 +258,8 @@ def zsampler_turbo_core(latent_input             : dict[str, Any],
                                               initial_noise_scale  = initial_noise_scale,
                                               start_with_noise     = start_with_noise,
                                               end_with_denoise     = end_with_denoise,
+                                              inject_noise_scales  = inject_noise_scales,
+                                              inject_noise_freqs   = inject_noise_freqs,
                                               progress_preview = ProgressPreview( 100, parent=(progress_preview,100//steps,100) ),
                                               )
     return latent_output
@@ -275,6 +302,8 @@ def execute_3_stage_denoising(latent_image,
                               end_with_denoise    : bool                                    = True,
                               positive_stg2       : list | None                             = None,
                               positive_stg3       : list | None                             = None,
+                              inject_noise_scales : tuple[float,float,float] | None        = None,
+                              inject_noise_freqs  : tuple[int  ,int  ,int  ] | None        = None,
                               progress_preview    : ProgressPreview,
                               ):
     """
@@ -375,6 +404,8 @@ def execute_3_stage_denoising(latent_image,
                         noise_scale         = initial_noise_scale if add_noise else 0,
                         force_final_denoise = force_denoise,
                         keep_masked_area    = True,
+                        inject_noise_scale  = inject_noise_scales[0] if inject_noise_scales else 0,
+                        inject_noise_freq   = inject_noise_freqs[0]  if inject_noise_freqs  else 0,
                         progress_preview    = ProgressPreview( prog1-prog0,
                                 parent=(progress_preview, 100*prog0//total, 100*prog1//total)),
                         )
@@ -396,6 +427,8 @@ def execute_3_stage_denoising(latent_image,
                         noise_scale         = 1.0 if add_noise else 0,
                         force_final_denoise = force_denoise,
                         keep_masked_area    = True,
+                        inject_noise_scale  = inject_noise_scales[1] if inject_noise_scales else 0,
+                        inject_noise_freq   = inject_noise_freqs[1]  if inject_noise_freqs  else 0,
                         progress_preview    = ProgressPreview( prog2-prog1,
                                 parent=(progress_preview, 100*prog1//total, 100*prog2//total)),
                         )
@@ -414,6 +447,8 @@ def execute_3_stage_denoising(latent_image,
                         noise_scale         = 1.0 if add_noise else 0,
                         force_final_denoise = force_denoise,
                         keep_masked_area    = True,
+                        inject_noise_scale  = inject_noise_scales[2] if inject_noise_scales else 0,
+                        inject_noise_freq   = inject_noise_freqs[2]  if inject_noise_freqs  else 0,
                         progress_preview    = ProgressPreview( total-prog2,
                                 parent=(progress_preview, 100*prog2//total, 100*total//total)),
                         )
@@ -431,10 +466,12 @@ def execute_sampler(latent_image    : dict[str, Any],
                     sigmas          : list | torch.Tensor,
                     noise_bias      : torch.Tensor | float | int | None,
                     noise_scale     : torch.Tensor | float | int | None,
-                    force_final_denoise: bool = False,
-                    keep_masked_area   : bool = False,
-                    fix_empty_latent   : bool = True,
-                    progress_preview   : ProgressPreview | None = None,
+                    force_final_denoise : bool  = False,
+                    keep_masked_area    : bool  = False,
+                    fix_empty_latent    : bool  = True,
+                    inject_noise_scale  : float = 0,
+                    inject_noise_freq   : int   = 0,
+                    progress_preview    : ProgressPreview | None = None,
                     ) -> dict[str, Any]:
     """
     Emulates comfyui's 'SamplerCustom' node but with extra functionality.
@@ -512,35 +549,42 @@ def execute_sampler(latent_image    : dict[str, Any],
     original_samples : torch.Tensor | None = samples
     original_mask    : torch.Tensor | None = noise_mask
 
-    # scale initial noise using `noise_scale`.
-    # (0.0 results in no noise; 1.0 represents standard unit variance)
-    if isinstance(noise_scale, (float,int)) and noise_scale == 0:
-        noise = torch.zeros(samples.shape,
-                            dtype   = samples.dtype,
-                            layout  = samples.layout,
-                            device  = "cpu")
+    # generate the noise needed by `comfy.sample.sample_custom(..)`;
+    # if both `noise_scale` and `noise_bias` are 0, then no noise is generated
+    if isinstance(noise_scale, (float,int)) and noise_scale == 0 and \
+       isinstance(noise_bias , (float,int)) and noise_bias  == 0:
+        comfy_noise = torch.zeros(samples.shape,
+                                  dtype   = samples.dtype,
+                                  layout  = samples.layout,
+                                  device  = "cpu")
     else:
-       #noise = comfy.sample.prepare_noise(samples, noise_seed, batch_index) * noise_scale + noise_bias
-        noise = generate_noise(noise_seed, samples.shape,
-                               noise_bias     = noise_bias,
-                               noise_scale    = noise_scale,
-                               batch_subseeds = batch_index,
-                               dtype          = samples.dtype,
-                               layout         = samples.layout,
-                               device         = "cpu",
-                               )
+        comfy_noise = generate_noise(noise_seed, samples.shape,
+                                     noise_bias     = noise_bias,
+                                     noise_scale    = noise_scale,
+                                     batch_subseeds = batch_index,
+                                     dtype          = samples.dtype,
+                                     layout         = samples.layout,
+                                     device         = "cpu")
 
     # this wrapper increments by 1 the steps count reported by comfyui.
     # comfyui reports the end of the first denoising step as 0 (0% completion)
     # breaking internal ProgressPreview calculation, the wrapper solves that
     progress_wrapper = ProgressPreview( steps, parent=(progress_preview, 1, steps+1) )
 
-    # generates the denoised latent using a native function from comfyui.
-    disable_pbar = not comfy.utils.PROGRESS_BAR_ENABLED
+    # apply extra noise injection if it was required
+    if inject_noise_scale and inject_noise_freq:
+        samples = inject_low_freq_noise(samples,
+                                        seed        = noise_seed,
+                                        noise_scale = inject_noise_scale,
+                                        noise_freq  = inject_noise_freq)
 
+    # force a full denoising (with the last sigma to zero) if it was required
     if force_final_denoise:
         sigmas[-1] = 0
-    samples = comfy.sample.sample_custom(model, noise, cfg, sampler, sigmas, positive, negative,
+
+    # generates the denoised latent using a native function from comfyui
+    disable_pbar = not comfy.utils.PROGRESS_BAR_ENABLED
+    samples = comfy.sample.sample_custom(model, comfy_noise, cfg, sampler, sigmas, positive, negative,
                                          samples, noise_mask=noise_mask, callback=progress_wrapper,
                                          disable_pbar=disable_pbar, seed=noise_seed)
 
@@ -709,6 +753,55 @@ def estimate_initial_noise_features(latent_image,
     # TODO: check clamp range
     #bias.clamp_(min=-4.5, max=4.5)
     return bias, scale
+
+
+def inject_low_freq_noise(x           : torch.Tensor,
+                          seed        : int,
+                          *,
+                          noise_scale : float = 1.0,
+                          noise_freq  : int   = 1024,
+                          ) -> torch.Tensor:
+    """
+    Injects low-frequency noise into the input tensor x.
+
+    This function generates noise at a lower resolution based on the specified
+    frequency, resulting in a smoother (low-frequency) noise effect when applied
+    to the input tensor.
+
+    Args:
+        x           : Input tensor to which noise will be added.
+        seed        : Seed for random noise generation to ensure reproducibility.
+        noise_scale : Scale factor for the noise intensity. Default is 1.0.
+                       A 0.0 value disables noise injection.
+        noise_freq  : Frequency factor that determines the resolution at which
+                       noise is generated. A lower value results in smoother noise.
+                       For example, a noise_freq of 1024 means noise is injected
+                       into every pixel, while a noise_freq of 512 means noise is
+                       injected every second pixel, with intermediate pixels being
+                       interpolated.
+    Returns:
+        The input tensor x with low-frequency noise injected.
+    """
+    h, w  = x.shape[-2:]
+    if noise_scale <= 0.0  or  noise_freq < (1024/h)  or  noise_freq < (1024/w):
+        return x
+
+    low_res_shape = ( *x.shape[:-2], (h * noise_freq) // 1024, (w * noise_freq) // 1024 )
+
+    noise = generate_noise(seed,
+                           noise_scale = noise_scale,
+                           shape       = low_res_shape,
+                           dtype       = x.dtype,
+                           layout      = x.layout,
+                           device      = x.device,
+                           )
+
+    # inject the low frequency noise into the input tensor x and return
+    return x + F.interpolate(noise,
+                             size = (h, w),
+                             mode = 'bilinear',
+                             align_corners = False,
+                             )
 
 
 #============================ SIGMA OPERATIONS =============================#
