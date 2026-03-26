@@ -40,6 +40,7 @@ def zsampler_turbo_core(latent_input             : dict[str, Any],
                         end_with_denoise         : bool                                    = True,
                         positive_stg2            : list[ tuple[torch.Tensor,dict] ] | None = None,
                         positive_stg3            : list[ tuple[torch.Tensor,dict] ] | None = None,
+                        shuffle_seed             : int | None                              = None,
                         inject_noise_scales      : tuple[float,float,float] | None         = None,
                         inject_noise_freqs       : tuple[int  ,int  ,int  ] | None         = None,
                         progress_preview         : ProgressPreview
@@ -78,6 +79,10 @@ def zsampler_turbo_core(latent_input             : dict[str, Any],
                                     If `None` (default), the main positive conditioning will be used.
         positive_stg3            : Optional positive conditioning to be used in the third stage.
                                     If `None` (default), the main positive conditioning will be used.
+        shuffle_seed             : Optional seed for shuffling the latent image between the stage1 and stage2.
+                                    This results in a significant increase in the model's creativity,
+                                    generating much more diverse images.
+                                    If zero or None, no shuffling will be performed.
         inject_noise_scales      : Optional scales of the extra noise injected into the latent image in each stage.
                                     If `None` (default), no extra noise will be injected.
         inject_noise_freqs       : Optional frequencies at which additional noise is injected into the latent image
@@ -189,20 +194,6 @@ def zsampler_turbo_core(latent_input             : dict[str, Any],
                 sigmas3[i] += next(offset_iter, 0.0)
 
 
-    # union between stage1 and stage2 seems to be unnecessary since sigma
-    # truncation was implemented correctly; for that reason these lines
-    # are commented:
-    #
-    #   # if the first step was truncated (or discarded) then the first two stages
-    #   # are combined into one; this proved to be effective when `denoising < 1`
-    #   # during inpainting,
-    #   if not start_from_pure_noise:
-    #       sigmas1 = sigmas1[:-1] if sigmas1 else []
-    #       if sigmas2 is not None:
-    #           sigmas1.extend( sigmas2 )
-    #       sigmas2 = None
-
-
     # `sample_size` is noise_est_sample_size converted to integer (pixels)
     # or None if "image_size" option was selected
     if isinstance(noise_est_sample_size, str) and noise_est_sample_size.endswith("px"):
@@ -258,6 +249,7 @@ def zsampler_turbo_core(latent_input             : dict[str, Any],
                                               initial_noise_scale  = initial_noise_scale,
                                               start_with_noise     = start_with_noise,
                                               end_with_denoise     = end_with_denoise,
+                                              shuffle_seed         = shuffle_seed,
                                               inject_noise_scales  = inject_noise_scales,
                                               inject_noise_freqs   = inject_noise_freqs,
                                               progress_preview = ProgressPreview( 100, parent=(progress_preview,100//steps,100) ),
@@ -302,8 +294,9 @@ def execute_3_stage_denoising(latent_image,
                               end_with_denoise    : bool                                    = True,
                               positive_stg2       : list | None                             = None,
                               positive_stg3       : list | None                             = None,
-                              inject_noise_scales : tuple[float,float,float] | None        = None,
-                              inject_noise_freqs  : tuple[int  ,int  ,int  ] | None        = None,
+                              shuffle_seed        : int  | None                             = None,
+                              inject_noise_scales : tuple[float,float,float] | None         = None,
+                              inject_noise_freqs  : tuple[int  ,int  ,int  ] | None         = None,
                               progress_preview    : ProgressPreview,
                               ):
     """
@@ -339,6 +332,8 @@ def execute_3_stage_denoising(latent_image,
                               Set to `False` to preserve noise from a previous process (chaining samplers).
         end_with_denoise   : If `True` (default), ends the denoising process by zeroing out residual noise.
                               Set to `False` to preserve noise for a next process (chaining samplers).
+        shuffle_seed       : Optional seed for shuffling the latent image between the stage1 and stage2.
+                              If zero or None, no shuffling will be performed.
 
     Returns:
         A dictionary with the updated latent image data after all three denoising stages.
@@ -394,7 +389,7 @@ def execute_3_stage_denoising(latent_image,
         is_first_stage = True
         is_last_stage  = (sigmas2 is None and sigmas3 is None)
         add_noise     = (is_first_stage and start_with_noise)
-        force_denoise = (is_last_stage  and end_with_denoise)
+        force_denoise = (is_last_stage  and end_with_denoise) or bool(shuffle_seed)
 
         latent_image = execute_sampler(latent_image,
                         model, seed, cfg, positive, negative,
@@ -416,7 +411,7 @@ def execute_3_stage_denoising(latent_image,
         # this stage is the first and therefore it must add noise
         is_first_stage = (sigmas1 is None)
         is_last_stage  = (sigmas3 is None)
-        add_noise     = (is_first_stage and start_with_noise)
+        add_noise     = (is_first_stage and start_with_noise) or bool(shuffle_seed)
         force_denoise = (is_last_stage  and end_with_denoise)
 
         latent_image = execute_sampler(latent_image,
@@ -427,6 +422,7 @@ def execute_3_stage_denoising(latent_image,
                         noise_scale         = 1.0 if add_noise else 0,
                         force_final_denoise = force_denoise,
                         keep_masked_area    = True,
+                        shuffle_seed        = shuffle_seed,
                         inject_noise_scale  = inject_noise_scales[1] if inject_noise_scales else 0,
                         inject_noise_freq   = inject_noise_freqs[1]  if inject_noise_freqs  else 0,
                         progress_preview    = ProgressPreview( prog2-prog1,
@@ -469,8 +465,9 @@ def execute_sampler(latent_image    : dict[str, Any],
                     force_final_denoise : bool  = False,
                     keep_masked_area    : bool  = False,
                     fix_empty_latent    : bool  = True,
-                    inject_noise_scale  : float = 0,
-                    inject_noise_freq   : int   = 0,
+                    shuffle_seed        : int | None = 0,
+                    inject_noise_scale  : float      = 0,
+                    inject_noise_freq   : int        = 0,
                     progress_preview    : ProgressPreview | None = None,
                     ) -> dict[str, Any]:
     """
@@ -500,6 +497,8 @@ def execute_sampler(latent_image    : dict[str, Any],
         keep_masked_area   : If True, the masked area of the latent image will be kept unchanged.
                               Comfyui tries to keep masked area unchanged when there's a mask active
                               but activating this flag we're sure that no change will happen at all.
+        shuffle_seed       : Optional seed for shuffling the latent image.
+                              If zero or None, no shuffling will be performed.
         progress_preview   : Optional callback for tracking progress. Defaults to None.
 
     Returns:
@@ -549,6 +548,23 @@ def execute_sampler(latent_image    : dict[str, Any],
     original_samples : torch.Tensor | None = samples
     original_mask    : torch.Tensor | None = noise_mask
 
+
+    # shuffle the image if it was required
+    if shuffle_seed:
+        samples = shuffle_tensor(samples, shuffle_seed)
+
+    # apply extra noise injection if it was required
+    if inject_noise_scale and inject_noise_freq:
+        samples = inject_low_freq_noise(samples,
+                                        seed        = noise_seed,
+                                        noise_scale = inject_noise_scale,
+                                        noise_freq  = inject_noise_freq)
+
+    # force a full denoising (with the last sigma to zero) if it was required
+    if force_final_denoise:
+        sigmas[-1] = 0
+
+
     # generate the noise needed by `comfy.sample.sample_custom(..)`;
     # if both `noise_scale` and `noise_bias` are 0, then no noise is generated
     if isinstance(noise_scale, (float,int)) and noise_scale == 0 and \
@@ -570,20 +586,9 @@ def execute_sampler(latent_image    : dict[str, Any],
     # comfyui reports the end of the first denoising step as 0 (0% completion)
     # breaking internal ProgressPreview calculation, the wrapper solves that
     progress_wrapper = ProgressPreview( steps, parent=(progress_preview, 1, steps+1) )
-
-    # apply extra noise injection if it was required
-    if inject_noise_scale and inject_noise_freq:
-        samples = inject_low_freq_noise(samples,
-                                        seed        = noise_seed,
-                                        noise_scale = inject_noise_scale,
-                                        noise_freq  = inject_noise_freq)
-
-    # force a full denoising (with the last sigma to zero) if it was required
-    if force_final_denoise:
-        sigmas[-1] = 0
+    disable_pbar = not comfy.utils.PROGRESS_BAR_ENABLED
 
     # generates the denoised latent using a native function from comfyui
-    disable_pbar = not comfy.utils.PROGRESS_BAR_ENABLED
     samples = comfy.sample.sample_custom(model, comfy_noise, cfg, sampler, sigmas, positive, negative,
                                          samples, noise_mask=noise_mask, callback=progress_wrapper,
                                          disable_pbar=disable_pbar, seed=noise_seed)
@@ -600,6 +605,89 @@ def execute_sampler(latent_image    : dict[str, Any],
     return out
 
 
+#============================= IMAGE SHUFFLING =============================#
+
+def random_tensor_fragment(x        : torch.Tensor,
+                           generator: torch.Generator,
+                           size     : tuple[float, float] = (0.50, 0.75),
+                           anchor   : str = 'left'
+                           ) -> torch.Tensor:
+    """
+    Extracts a random rectangular fragment from a 4-dimensional tensor.
+
+    This function generates a random fragment by selecting a random rectangle
+    within the tensor and then resizing it to match the original tensor's dimensions.
+
+    Args:
+        x         : Input tensor of shape (B, C, H, W) representing an image or feature map.
+        generator : Random number generator for reproducibility.
+        size      : Minimum and maximum relative size of the fragment as a
+                     ratio of the input tensor's width. Defaults to (0.50, 0.75)
+        anchor    : Specifies the side to which the fragment is anchored.
+                     Can be either 'left' or 'right'. Defaults to 'left'.
+    Returns:
+        A tensor of the same shape as the input tensor, containing a randomly selected fragment.
+    """
+    if x.dim() != 4:
+        raise ValueError("Input tensor must be 4-D (B, C, H, W).")
+    if anchor not in {"left", "right"}:
+        raise ValueError("anchor must be either 'left' or 'right'.")
+
+    B, C, H, W = x.shape
+
+    # give the rectangle a random size within the provided limits.
+    min_size, max_size = size
+    ratio = torch.rand(1, generator=generator, device=x.device) * (max_size - min_size) + min_size
+    frag_width  = int(W * ratio)
+    frag_height = int(H * ratio)
+
+    # place the rectangle in a random position inside the tensor
+    top  = torch.randint(0, H - frag_height + 1, (1,), generator=generator, device="cpu").item()
+    left = 0 if anchor == "left" else W - frag_width
+
+    # fragment = (B, C, fh, fw)
+    fragment = x[..., top:top + frag_height, left:left + frag_width]
+    # return = (B, C, H, W)
+    return F.interpolate(fragment, size=(H, W), mode='bilinear', align_corners=False)
+
+
+def shuffle_tensor(x: torch.Tensor, seed: int) -> torch.Tensor:
+    """
+    Shuffles the input latent image tensor.
+
+    The function shuffles the tensor by dividing it into fragments, shuffling
+    each fragment independently, and then combining them while preserving the
+    overall standard deviation and mean of the original tensor.
+
+    Args:
+        x    : Input tensor of shape (B, C, H, W) representing the latent image.
+        seed : Fixed seed for random number generation to ensure reproducibility.
+
+    Returns:
+        A new tensor with the same shape as `x`, where fragments of the
+        original image are shuffled in a random manner.
+    """
+    if x.dim() != 4:
+        raise ValueError("Input tensor must be (B, C, H, W).")
+    if not isinstance(seed, int):
+        raise TypeError("seed must be an integer.")
+
+    x_scale = x.std (dim=(2,3), keepdim=True)
+    x_bias  = x.mean(dim=(2,3), keepdim=True)
+
+    generator = torch.Generator().manual_seed(seed)
+    result =  random_tensor_fragment(x, generator, size=(0.50,0.75), anchor='left')
+    result += random_tensor_fragment(x, generator, size=(0.50,0.75), anchor='right')
+
+    result_scale = result.std (dim=(2,3), keepdim=True)
+    result_bias  = result.mean(dim=(2,3), keepdim=True)
+
+    # re-scale/shift to match original features
+    scale_factor  = x_scale / result_scale.clamp(min=1e-6)
+    combined_bias = x_bias - (result_bias * scale_factor)
+    return result * scale_factor + combined_bias
+
+
 #============================ NOISE PROCESSING =============================#
 
 def generate_noise(seed           : int,
@@ -610,7 +698,7 @@ def generate_noise(seed           : int,
                    batch_subseeds : list[int] | None                  = None,
                    dtype          : torch.dtype,
                    layout         : torch.layout,
-                   device         : str | torch.device                = "cpu"
+                   device         : str | torch.device = "cpu"
                    ):
     """
     Generate batched noise with optional per-sample 'virtual' sub-seeds.
