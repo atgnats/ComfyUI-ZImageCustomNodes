@@ -118,6 +118,9 @@ class ZSamplerTurbo2Advanced(io.ComfyNode):
                                               "enhance intensity and saturation. This parameter only affects the image "
                                               "when 'start_at_step' is set to 0 and 'add_noise' is enabled. ",
                                      ),
+                io.Combo.Input       ("sigma_preset_name", default="bravo", options=["alpha", "bravo", "delta"],
+                                      tooltip="The set of predefined sigma values that are used during the denoise process. "
+                                     ),
                 io.Float.Input       ("initial_bias_level", default=1.5, min=0.0, max=2.0, step=0.1,
                                       tooltip="The level of adjustament from the estimated noise bias to apply before "
                                               "the first denoising step. 0.0 means no noise bias adjustment; 1.0 means "
@@ -152,6 +155,7 @@ class ZSamplerTurbo2Advanced(io.ComfyNode):
                 end_at_step           : int,
                 force_final_denoising : bool,
                 z_vibrance            : float,
+                sigma_preset_name     : str,
                 initial_bias_level    : float,
                 initial_sample_size   : str,
                 sampler_stg1          : str,
@@ -182,7 +186,7 @@ class ZSamplerTurbo2Advanced(io.ComfyNode):
                                             noise_est_sample_size     = initial_sample_size,
                                             noise_est_sample_bias     = 0.0,
                                             noise_est_sample_scale    = 1.0,
-                                            sigma_preset_name         = "bravo",
+                                            sigma_preset_name         = sigma_preset_name,
                                             sigma_step_range          = sigma_step_range,
                                             start_with_noise          = add_noise,
                                             end_with_denoise          = force_final_denoising,

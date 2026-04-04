@@ -127,7 +127,7 @@ class ZSamplerTurbo2Laboratory(io.ComfyNode):
                                               "Note: sampling behavior may vary with different samplers."
                                      ),
 
-                io.Combo.Input       ("sigma_preset_name", default="bravo", options=["alpha", "bravo", "charlie"],
+                io.Combo.Input       ("sigma_preset_name", default="bravo", options=["alpha", "bravo", "delta"],
                                       tooltip="The set of predefined sigma values that are used during the denoise process. "
                                      ),
                 io.Float.Input       ("sigma0_off", default=0.000, min=-1.000, max=1.000, step=0.001,

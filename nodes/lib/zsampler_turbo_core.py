@@ -1105,9 +1105,45 @@ BRAVO_SIGMA_PRESET = (
     )
 )
 
+# DELTA SIGMA PRESET - Same as ALPHA but without jump-back between stages 1 and 2
+# This tests whether the jump-back was actually necessary for image quality.
+# Stage 2 sigmas continue smoothly from where Stage 1 ends (no jump back up).
+DELTA_SIGMA_PRESET = (
+    (###3
+        (0.991, 0.980, 0.920),                      #< +2 steps
+        (0.920, 0.000),                             #< +1 step  | = 3 generation steps (continuous from 0.920)
+        None,                                       #< (no refiner)
+    ),(#4
+        (0.991, 0.980, 0.920),                      #< +2 steps
+        (0.920, 0.550),                             #< +1 step  | = 3 generation steps (continuous from 0.920)
+        (0.790, 0.000),                             #< +1 step  | + 1 refiner step
+    ),(#5
+        (0.991, 0.980, 0.920),                      #< +2 steps
+        (0.920, 0.745, 0.000),                      #< +2 steps | = 4 generation steps (continuous from 0.920)
+        (0.620, 0.000),                             #< +1 step  | + 1 refiner step
+    ),(#6
+        (0.991, 0.980, 0.920),                      #< +2 steps
+        (0.920, 0.745, 0.570, 0.000),               #< +3 steps | = 5 generation steps (continuous from 0.920)
+        (0.658, 0.302, 0.000),                      #< +2 steps | + 2 refiner steps
+    ),(#7
+        (0.991, 0.980, 0.920),                      #< +2 steps
+        (0.920, 0.860, 0.750, 0.600, 0.000),        #< +4 steps | = 6 generation steps (continuous from 0.920)
+        (0.658, 0.302, 0.000),                      #< +2 steps | + 2 refiner steps
+    ),(#8
+        (0.991, 0.980, 0.920),                      #< +2 steps
+        (0.920, 0.860, 0.780, 0.660, 0.500, 0.000), #< +5 steps | = 7 generation steps (continuous from 0.920)
+        (0.658, 0.302, 0.000),                      #< +2 steps | + 2 refiner steps
+    ),(#9
+        (0.991, 0.980, 0.920),                      #< +2 steps
+        (0.920, 0.860, 0.780, 0.660, 0.500, 0.000), #< +5 steps | = 7 generation steps (continuous from 0.920)
+        (0.658, 0.456, 0.200, 0.000),               #< +3 steps | + 3 refiner steps
+    )
+)
+
 SIGMA_PRESETS_BY_NAME = {
     "alpha"  : ALPHA_SIGMA_PRESET,
     "bravo"  : BRAVO_SIGMA_PRESET,
+    "no-jump-back"  : DELTA_SIGMA_PRESET,
 }
 
 #=== DISCARDED SIGMA PRESETS ===
