@@ -49,6 +49,9 @@ class StyleStringInjector2(io.ComfyNode):
                 io.String.Input("string", multiline=True, dynamic_prompts=True, force_input=True,
                                 tooltip="The prompt to modify.",
                                ),
+                io.Boolean.Input("spicy", default=False,
+                                tooltip="Enable spicy content enhancement in the style template.",
+                               ),
             ],
             outputs=[
                 io.String.Output(tooltip="The prompt after applying the selected style."),
@@ -57,13 +60,13 @@ class StyleStringInjector2(io.ComfyNode):
 
     #__ FUNCTION __________________________________________
     @classmethod
-    def execute(cls, style: str, string: str, **kwargs) -> io.NodeOutput:
+    def execute(cls, style: str, string: str, spicy: bool = False, **kwargs) -> io.NodeOutput:
         template = cls.predefined_style_template(style)
 
         # apply the style template to the prompt
         prompt = string
         if template:
-            prompt = StyleGroup.apply_style_template(prompt, template, spicy_impact_booster=False)
+            prompt = StyleGroup.apply_style_template(prompt, template, spicy_impact_booster=spicy)
 
         return io.NodeOutput( prompt )
 

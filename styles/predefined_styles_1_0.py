@@ -62,7 +62,7 @@ YOUR PHOTO:
 
 >>>High Quality Photo
 YOUR CONTEXT:
-Your photos exhibit sharp focus, realistic color reproduction, and a wide dynamic range that preserves detail in both shadows and highlights.
+Your photos exhibit {$spicy-content-with} sharp focus, realistic color reproduction, and a wide dynamic range that preserves detail in both shadows and highlights.
 The colors are vibrant and high-quality with natural skin tones.
 Your photos have fine grain and a clean, detailed background.
 The composition follows classic photographic rules (rule of thirds, guidelines, symmetry, etc.) and is well-framed, conveying a sense of deliberate artistry and craftsmanship.

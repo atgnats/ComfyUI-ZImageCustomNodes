@@ -213,8 +213,10 @@ class StyleGroup:
         """
         spicy_content = ""
         if spicy_impact_booster:
-            spicy_content = "attractive and spicy content, where any woman is sexy and provocative, with"
+            spicy_content = "attractive and provacative content, where any woman is sexy and seductive, with"
 
+        #"attractive and spicy content, where any woman is sexy and provocative, with"
+        
         result = style_template
         result = result.replace("{$spicy-content-with}", spicy_content) #< the secret spicy dressing
         result = result.replace("{$@}"                 , prompt       ) #< prompt to be styled

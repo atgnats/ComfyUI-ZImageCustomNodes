@@ -63,6 +63,9 @@ class StylePromptEncoder2(io.ComfyNode):
                 io.String.Input("text", multiline=True, dynamic_prompts=True,
                                 tooltip="The prompt to encode.",
                                ),
+                io.Boolean.Input("spicy", default=False,
+                                tooltip="Enable spicy content enhancement in the style template.",
+                               ),
             ],
             outputs=[
                 io.Conditioning.Output(tooltip="The encoded text used to guide the image generation."),
@@ -76,6 +79,7 @@ class StylePromptEncoder2(io.ComfyNode):
                 clip,
                 style         : str,
                 text          : str,
+                spicy         : bool = False,
                 customization : str = "",
                 **kwargs
                 ) -> io.NodeOutput:
@@ -88,7 +92,7 @@ class StylePromptEncoder2(io.ComfyNode):
         # apply the style template to the prompt
         prompt = text
         if template:
-            prompt = StyleGroup.apply_style_template(prompt, template, spicy_impact_booster=False)
+            prompt = StyleGroup.apply_style_template(prompt, template, spicy_impact_booster=spicy)
 
         # encode the prompt using the provided text encoder (clip)
         if clip is None:
