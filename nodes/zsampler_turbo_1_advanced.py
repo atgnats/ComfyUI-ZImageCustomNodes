@@ -21,6 +21,7 @@ from comfy_api.latest  import io
 from .lib.progress_bar               import ProgressPreview
 from .lib.zsampler_turbo_legacy_core import zsampler_turbo_legacy_core
 
+from comfy.samplers               import SAMPLER_NAMES
 
 
 class ZSamplerTurboAdvanced(io.ComfyNode):
