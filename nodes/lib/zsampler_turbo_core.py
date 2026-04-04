@@ -43,6 +43,9 @@ def zsampler_turbo_core(latent_input             : dict[str, Any],
                         shuffle_seed             : int | None                              = None,
                         inject_noise_scales      : tuple[float,float,float] | None         = None,
                         inject_noise_freqs       : tuple[int  ,int  ,int  ] | None         = None,
+                        sampler_name             : str | None                              = None,
+                        sampler_stg2             : str | None                              = None,
+                        sampler_stg3             : str | None                              = None,
                         progress_preview         : ProgressPreview
                         ) -> dict[str, Any]:
     """
@@ -111,9 +114,17 @@ def zsampler_turbo_core(latent_input             : dict[str, Any],
     else:
         inject_noise_freqs = None
 
-    # only "euler" sampler has been tested with this technique
-    sampler_name = "euler"
+    # only "euler" sampler has been tested with this technique, default to it if not specified
+    if sampler_name is None:
+        sampler_name = "euler"
+    if sampler_stg2 is None:
+        sampler_stg2 = sampler_name
+    if sampler_stg3 is None:
+        sampler_stg3 = sampler_name
+    
     sampler = comfy.samplers.sampler_object(sampler_name)
+    sampler_stage2 = comfy.samplers.sampler_object(sampler_stg2)
+    sampler_stage3 = comfy.samplers.sampler_object(sampler_stg3)
 
     # z-image turbo is a cfg-distilled model requiring CFG=1.0, which discard
     # negative conditioning, here we set it to `positive` for simplicity
@@ -240,6 +251,8 @@ def zsampler_turbo_core(latent_input             : dict[str, Any],
                                               positive_stg2        = positive_stg2,
                                               positive_stg3        = positive_stg3,
                                               sampler              = sampler,
+                                              sampler_stg2         = sampler_stage2,
+                                              sampler_stg3         = sampler_stage3,
                                               sigmas1              = sigmas1,
                                               sigmas2              = sigmas2,
                                               sigmas3              = sigmas3,
@@ -297,7 +310,9 @@ def execute_3_stage_denoising(latent_image,
                               shuffle_seed        : int  | None                             = None,
                               inject_noise_scales : tuple[float,float,float] | None         = None,
                               inject_noise_freqs  : tuple[int  ,int  ,int  ] | None         = None,
-                              progress_preview    : ProgressPreview,
+                              sampler_stg2        : comfy.samplers.KSAMPLER | None          = None,
+                              sampler_stg3        : comfy.samplers.KSAMPLER | None          = None,
+                              progress_preview    : ProgressPreview                       = None,
                               ):
     """
     Executes a three-stage denoising process on the provided latent image.
@@ -344,6 +359,13 @@ def execute_3_stage_denoising(latent_image,
         positive_stg2 = positive
     if positive_stg3 is None or (isinstance(positive_stg3,(list,tuple)) and len(positive_stg3) == 0):
         positive_stg3 = positive
+
+    # the samplers for stage 2 and 3 are optional
+    # if not provided, they will be the same as the main sampler
+    if sampler_stg2 is None:
+        sampler_stg2 = sampler
+    if sampler_stg3 is None:
+        sampler_stg3 = sampler
 
     # if sigmas is a list then convert it to pytorch tensor
     if isinstance(sigmas1, list):
@@ -416,7 +438,7 @@ def execute_3_stage_denoising(latent_image,
 
         latent_image = execute_sampler(latent_image,
                         model, seed, cfg, positive_stg2, negative,
-                        sampler             = sampler,
+                        sampler             = sampler_stg2,
                         sigmas              = sigmas2,
                         noise_bias          = 0,
                         noise_scale         = 1.0 if add_noise else 0,
@@ -437,7 +459,7 @@ def execute_3_stage_denoising(latent_image,
 
         latent_image = execute_sampler(latent_image,
                         model, 696969, cfg, positive_stg3, negative,
-                        sampler             = sampler,
+                        sampler             = sampler_stg3,
                         sigmas              = sigmas3,
                         noise_bias          = 0,
                         noise_scale         = 1.0 if add_noise else 0,

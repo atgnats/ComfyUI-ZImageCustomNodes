@@ -20,6 +20,7 @@ from typing            import Any
 from comfy_api.latest  import io
 from .lib.progress_bar        import ProgressPreview
 from .lib.zsampler_turbo_core import zsampler_turbo_core
+from comfy.samplers           import SAMPLER_NAMES
 def Divider(id: str):
     return io.Custom("ZIPN_DIVIDER").Input(id = id)
 
@@ -94,6 +95,22 @@ class ZSamplerTurbo2Advanced(io.ComfyNode):
 
                 Divider("divider"),#=========================================
 
+                io.Combo.Input       ("sampler_stg1", default="euler", options=SAMPLER_NAMES,
+                                      tooltip="The sampler algorithm to use for the first stage denoising. "
+                                              "'euler' is the recommended default. "
+                                              "Note: sampling behavior may vary with different samplers."
+                                     ),
+                io.Combo.Input       ("sampler_stg2", default="euler", options=SAMPLER_NAMES,
+                                      tooltip="The sampler algorithm to use for the second stage denoising. "
+                                              "'euler' is the recommended default. "
+                                              "Note: sampling behavior may vary with different samplers."
+                                     ),
+                io.Combo.Input       ("sampler_stg3", default="euler", options=SAMPLER_NAMES,
+                                      tooltip="The sampler algorithm to use for the third stage denoising. "
+                                              "'euler' is the recommended default. "
+                                              "Note: sampling behavior may vary with different samplers."
+                                     ),
+
                 io.Float.Input       ("z_vibrance", default=0.0, min=-1.0, max=1.0, step=0.1,
                                       tooltip="The amount of over-amplitude in the initial noise to generate images with "
                                               "more pronounced contrasts and colors. 0.0 means no correction is applied. "
@@ -137,6 +154,9 @@ class ZSamplerTurbo2Advanced(io.ComfyNode):
                 z_vibrance            : float,
                 initial_bias_level    : float,
                 initial_sample_size   : str,
+                sampler_stg1          : str,
+                sampler_stg2          : str,
+                sampler_stg3          : str,
                 positive_stg2         : list | None = None,
                 positive_stg3         : list | None = None,
                 **kwargs
@@ -166,6 +186,9 @@ class ZSamplerTurbo2Advanced(io.ComfyNode):
                                             sigma_step_range          = sigma_step_range,
                                             start_with_noise          = add_noise,
                                             end_with_denoise          = force_final_denoising,
+                                            sampler_name              = sampler_stg1,
+                                            sampler_stg2              = sampler_stg2,
+                                            sampler_stg3              = sampler_stg3,
                                             progress_preview = ProgressPreview.from_model( model ),
                                             )
 

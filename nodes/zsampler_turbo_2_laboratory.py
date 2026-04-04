@@ -19,6 +19,7 @@ from typing            import Any
 from comfy_api.latest  import io
 from .lib.progress_bar        import ProgressPreview
 from .lib.zsampler_turbo_core import zsampler_turbo_core
+from comfy.samplers           import SAMPLER_NAMES
 def io_Divider(id: str):
     return io.Custom("ZIPN_DIVIDER").Input(id = id)
 
@@ -110,6 +111,22 @@ class ZSamplerTurbo2Laboratory(io.ComfyNode):
 
                 io_Divider("divider3"),#=====================================
 
+                io.Combo.Input       ("sampler_stg1", default="euler", options=SAMPLER_NAMES,
+                                      tooltip="The sampler algorithm to use for the first stage denoising. "
+                                              "'euler' is the recommended default. "
+                                              "Note: sampling behavior may vary with different samplers."
+                                     ),
+                io.Combo.Input       ("sampler_stg2", default="euler", options=SAMPLER_NAMES,
+                                      tooltip="The sampler algorithm to use for the second stage denoising. "
+                                              "'euler' is the recommended default. "
+                                              "Note: sampling behavior may vary with different samplers."
+                                     ),
+                io.Combo.Input       ("sampler_stg3", default="euler", options=SAMPLER_NAMES,
+                                      tooltip="The sampler algorithm to use for the third stage denoising. "
+                                              "'euler' is the recommended default. "
+                                              "Note: sampling behavior may vary with different samplers."
+                                     ),
+
                 io.Combo.Input       ("sigma_preset_name", default="bravo", options=["alpha", "bravo", "charlie"],
                                       tooltip="The set of predefined sigma values that are used during the denoise process. "
                                      ),
@@ -173,6 +190,9 @@ class ZSamplerTurbo2Laboratory(io.ComfyNode):
                 inject_noise_st3         : float,
                 inject_freq_st3          : int,
                 sigma_preset_name        : str,
+                sampler_stg1             : str,
+                sampler_stg2             : str,
+                sampler_stg3             : str,
                 sigma0_off               : float,
                 sigma1_off               : float,
                 sigma2_off               : float,
@@ -211,6 +231,9 @@ class ZSamplerTurbo2Laboratory(io.ComfyNode):
                                             sigma_limits              = sigma_limits,
                                             inject_noise_scales       = inject_noise_scales,
                                             inject_noise_freqs        = inject_noise_freqs,
+                                            sampler_name              = sampler_stg1,
+                                            sampler_stg2              = sampler_stg2,
+                                            sampler_stg3              = sampler_stg3,
                                             progress_preview = ProgressPreview.from_model( model ),
                                             )
 

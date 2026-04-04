@@ -19,6 +19,7 @@ from typing            import Any
 from comfy_api.latest  import io
 from .lib.progress_bar        import ProgressPreview
 from .lib.zsampler_turbo_core import zsampler_turbo_core
+from comfy.samplers           import SAMPLER_NAMES
 def Divider(id: str):
     return io.Custom("ZIPN_DIVIDER").Input(id = id)
 
@@ -77,6 +78,11 @@ class ZSamplerTurbo2(io.ComfyNode):
 
                 Divider("divider"),#=========================================
 
+                io.Combo.Input       ("sampler", default="euler", options=SAMPLER_NAMES,
+                                      tooltip="The sampler algorithm to use for denoising. "
+                                              "'euler' is the recommended default. "
+                                              "Note: sampling behavior may vary with different samplers."
+                                     ),
                 io.Float.Input       ("z_vibrance", default=0.0, min=-1.0, max=1.0, step=0.1,
                                       tooltip="The amount of over-amplitude in the initial noise to generate images with "
                                               "more pronounced contrasts and colors. 0.0 means no correction is applied. "
@@ -113,6 +119,7 @@ class ZSamplerTurbo2(io.ComfyNode):
                 denoise       : float,
                 z_vibrance    : float,
                 mode          : str,
+                sampler       : str,
                 lowres_sample : bool,
                 positive_stg2 : list | None = None,
                 positive_stg3 : list | None = None,
@@ -155,6 +162,7 @@ class ZSamplerTurbo2(io.ComfyNode):
                                             sigma_limits              = sigma_limits,
                                             inject_noise_scales       = inject_noise_scales,
                                             inject_noise_freqs        = inject_noise_freqs,
+                                            sampler_name              = sampler,
                                             progress_preview = ProgressPreview.from_model( model ),
                                             )
 
